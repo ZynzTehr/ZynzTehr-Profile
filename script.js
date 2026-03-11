@@ -170,12 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             scrollIndicator.classList.remove('back-to-top');
             scrollText.textContent = "Scroll Down";
-            // Optional fade based on scroll depth could go here
-            if(window.scrollY > 200) {
-                 scrollText.style.opacity = '0';
-            } else {
-                 scrollText.style.opacity = '1';
-            }
+            // Fade based on scroll depth
+            const opacity = Math.max(0, 1 - (window.scrollY / 200));
+            scrollText.style.opacity = opacity.toString();
         }
     });
 });

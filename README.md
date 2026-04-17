@@ -68,7 +68,7 @@ I kicked off my coding journey in **2024** and have been deep-diving into full-s
 ## Projects & Work
 
 ### Notable Projects
-- [**React Portfolio**](https://github.com/ZynzTehr) - *(Add a brief description here!)*
+- [**Portfolio**](https://github.com/ZynzTehr) - _A personal portfolio website showcasing my latest full-stack projects, technical skills, and development journey._
 
 **Want to see more?** Check out my [repositories](https://github.com/ZynzTehr?tab=repositories)!
 

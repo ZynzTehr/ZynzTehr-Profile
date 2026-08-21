@@ -171,11 +171,34 @@
                 </div>
             </div>
 
-            <!-- 3D Graph -->
+            <!-- 3D Graph Dynamic Switcher -->
             <div class="graph-container glass-card gs-reveal mt-12">
-                <h3>Contribution Activity</h3>
+                <div class="graph-header">
+                    <div>
+                        <h3>3D Contribution Graph</h3>
+                        <p class="theme-subtitle">Active Theme: <span class="gradient-text theme-name-badge" id="current-theme-name">Night View</span></p>
+                    </div>
+                    <div class="graph-actions">
+                        <button class="theme-control-btn" id="prev-theme-btn" aria-label="Previous Theme" title="Previous Theme">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <button class="theme-control-btn autoplay-btn" id="toggle-autoplay-btn" title="Toggle Auto-Cycle (4s)">
+                            <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <svg class="pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                            <span id="autoplay-text">Auto Cycle</span>
+                        </button>
+                        <button class="theme-control-btn" id="next-theme-btn" aria-label="Next Theme" title="Next Theme">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Theme Pills Selector -->
+                <div class="theme-pills-container" id="theme-pills"></div>
+
+                <!-- Graph Image Display -->
                 <div class="graph-wrapper">
-                    <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-view.svg" alt="3D Contribution Graph" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;"/>
+                    <img id="graph-3d-img" src="profile-3d-contrib/profile-night-view.svg" alt="3D Contribution Graph - Night View" class="graph-img"/>
                 </div>
             </div>
         </div>

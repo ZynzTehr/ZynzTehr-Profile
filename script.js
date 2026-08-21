@@ -175,4 +175,126 @@ document.addEventListener("DOMContentLoaded", () => {
             scrollText.style.opacity = opacity.toString();
         }
     });
+
+    // -----------------------------------------
+    // 5. Interactive 3D Contribution Graph Switcher
+    // -----------------------------------------
+    const graphThemes = [
+        { name: "Night View", file: "profile-3d-contrib/profile-night-view.svg", tag: "Dark" },
+        { name: "Night Rainbow", file: "profile-3d-contrib/profile-night-rainbow.svg", tag: "Rainbow" },
+        { name: "Night Green", file: "profile-3d-contrib/profile-night-green.svg", tag: "Dark Green" },
+        { name: "Classic Green", file: "profile-3d-contrib/profile-green.svg", tag: "Green" },
+        { name: "Green Animated", file: "profile-3d-contrib/profile-green-animate.svg", tag: "Animated" },
+        { name: "Northern Season", file: "profile-3d-contrib/profile-season.svg", tag: "Season" },
+        { name: "Season Animated", file: "profile-3d-contrib/profile-season-animate.svg", tag: "Animated" },
+        { name: "Southern Season", file: "profile-3d-contrib/profile-south-season.svg", tag: "South" },
+        { name: "South Animated", file: "profile-3d-contrib/profile-south-season-animate.svg", tag: "Animated" },
+        { name: "GitBlock 3D", file: "profile-3d-contrib/profile-gitblock.svg", tag: "Isometric" }
+    ];
+
+    let currentThemeIndex = 0;
+    let autoCycleInterval = null;
+
+    const graphImg = document.getElementById("graph-3d-img");
+    const currentThemeName = document.getElementById("current-theme-name");
+    const themePillsContainer = document.getElementById("theme-pills");
+    const prevBtn = document.getElementById("prev-theme-btn");
+    const nextBtn = document.getElementById("next-theme-btn");
+    const toggleAutoplayBtn = document.getElementById("toggle-autoplay-btn");
+    const autoplayText = document.getElementById("autoplay-text");
+    const playIcon = toggleAutoplayBtn ? toggleAutoplayBtn.querySelector(".play-icon") : null;
+    const pauseIcon = toggleAutoplayBtn ? toggleAutoplayBtn.querySelector(".pause-icon") : null;
+
+    if (graphImg && themePillsContainer) {
+        // Render theme pills
+        graphThemes.forEach((theme, index) => {
+            const pill = document.createElement("button");
+            pill.className = `theme-pill ${index === 0 ? "active" : ""}`;
+            pill.textContent = theme.name;
+            pill.setAttribute("aria-label", `Switch to ${theme.name} theme`);
+            pill.addEventListener("click", () => {
+                stopAutoCycle();
+                switchTheme(index);
+            });
+            themePillsContainer.appendChild(pill);
+        });
+
+        function switchTheme(newIndex) {
+            currentThemeIndex = (newIndex + graphThemes.length) % graphThemes.length;
+            const theme = graphThemes[currentThemeIndex];
+
+            // Animate transition
+            graphImg.classList.add("transitioning");
+
+            setTimeout(() => {
+                graphImg.src = theme.file;
+                graphImg.alt = `3D Contribution Graph - ${theme.name}`;
+                if (currentThemeName) {
+                    currentThemeName.textContent = theme.name;
+                }
+
+                // Update active pill
+                const allPills = themePillsContainer.querySelectorAll(".theme-pill");
+                allPills.forEach((p, idx) => {
+                    p.classList.toggle("active", idx === currentThemeIndex);
+                });
+
+                // Fade back in
+                graphImg.onload = () => {
+                    graphImg.classList.remove("transitioning");
+                };
+                setTimeout(() => graphImg.classList.remove("transitioning"), 150);
+            }, 200);
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener("click", () => {
+                stopAutoCycle();
+                switchTheme(currentThemeIndex - 1);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener("click", () => {
+                stopAutoCycle();
+                switchTheme(currentThemeIndex + 1);
+            });
+        }
+
+        function startAutoCycle() {
+            if (autoCycleInterval) return;
+            autoCycleInterval = setInterval(() => {
+                switchTheme(currentThemeIndex + 1);
+            }, 4000);
+            if (toggleAutoplayBtn) {
+                toggleAutoplayBtn.classList.add("active");
+                if (playIcon) playIcon.style.display = "none";
+                if (pauseIcon) pauseIcon.style.display = "inline-block";
+                if (autoplayText) autoplayText.textContent = "Cycling...";
+            }
+        }
+
+        function stopAutoCycle() {
+            if (autoCycleInterval) {
+                clearInterval(autoCycleInterval);
+                autoCycleInterval = null;
+            }
+            if (toggleAutoplayBtn) {
+                toggleAutoplayBtn.classList.remove("active");
+                if (playIcon) playIcon.style.display = "inline-block";
+                if (pauseIcon) pauseIcon.style.display = "none";
+                if (autoplayText) autoplayText.textContent = "Auto Cycle";
+            }
+        }
+
+        if (toggleAutoplayBtn) {
+            toggleAutoplayBtn.addEventListener("click", () => {
+                if (autoCycleInterval) {
+                    stopAutoCycle();
+                } else {
+                    startAutoCycle();
+                }
+            });
+        }
+    }
 });

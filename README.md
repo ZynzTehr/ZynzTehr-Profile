@@ -101,8 +101,50 @@ I kicked off my coding journey in **2024** and have been deep-diving into full-s
 ## 3D Contribution Graph
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-view.svg" alt="3D Contribution Graph" />
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-rainbow.svg" alt="3D Contribution Graph - Night Rainbow" />
 </p>
+
+<p align="center">
+  <a href="https://zynz-tehr-profile.vercel.app/#skills">
+    <img src="https://img.shields.io/badge/Live_Portfolio-Interactive_3D_Theme_Switcher-0A66C2?style=for-the-badge&logo=vercel&logoColor=white" alt="Try Interactive Switcher" />
+  </a>
+</p>
+
+<details>
+  <summary><b>🎨 Click to browse all 10 3D Contribution Themes</b></summary>
+  <br/>
+
+  ### 1. Night Rainbow
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-rainbow.svg" alt="Night Rainbow" width="100%" />
+
+  ### 2. Night View (Classic Dark)
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-view.svg" alt="Night View" width="100%" />
+
+  ### 3. Night Green
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-night-green.svg" alt="Night Green" width="100%" />
+
+  ### 4. Season Animated
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-season-animate.svg" alt="Season Animated" width="100%" />
+
+  ### 5. Northern Season
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-season.svg" alt="Northern Season" width="100%" />
+
+  ### 6. Southern Season Animated
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-south-season-animate.svg" alt="Southern Season Animated" width="100%" />
+
+  ### 7. Southern Season
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-south-season.svg" alt="Southern Season" width="100%" />
+
+  ### 8. Green Animated
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-green-animate.svg" alt="Green Animated" width="100%" />
+
+  ### 9. Classic Green
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-green.svg" alt="Classic Green" width="100%" />
+
+  ### 10. GitBlock 3D
+  <img src="https://raw.githubusercontent.com/ZynzTehr/ZynzTehr/main/profile-3d-contrib/profile-gitblock.svg" alt="GitBlock 3D" width="100%" />
+
+</details>
 
 ---
 

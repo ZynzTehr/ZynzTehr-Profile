@@ -550,6 +550,11 @@ a {
     transform: scale(1.1);
 }
 
+.graph-section-title {
+    padding-top: 6rem;
+    margin-bottom: 3.5rem;
+}
+
 /* 3D Contribution Graph Switcher */
 .graph-container {
     text-align: left;
@@ -563,11 +568,6 @@ a {
     flex-wrap: wrap;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
-}
-
-.graph-header h3 {
-    font-size: 1.6rem;
-    margin-bottom: 0.2rem;
 }
 
 .theme-subtitle {
@@ -837,8 +837,9 @@ a {
 
 
 /*
+/*
     ====================================
-    Media Queries (Mobile Responsiveness)
+    Media Queries (Mobile & Desktop Responsiveness)
     ====================================
 */
 @media (max-width: 768px) {
@@ -862,3 +863,23 @@ a {
         grid-template-columns: 1fr;
     }
 }
+
+/* 1440px and above layout: 3 columns with Web3 card spanning full width */
+@media (min-width: 1440px) {
+    :root {
+        --max-width: 1360px;
+    }
+
+    .skills-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .skill-category.web3-card {
+        grid-column: 1 / -1;
+    }
+
+    .skill-category.web3-card .category-header {
+        margin-bottom: 1.5rem;
+    }
+}
+

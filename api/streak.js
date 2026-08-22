@@ -214,6 +214,21 @@ function renderStreakSvg(stats, options = {}) {
     return `<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
         style='isolation: isolate' viewBox='0 0 495 195' width='495px' height='195px' direction='ltr'>
         <style>
+            /* Flame bottom-to-top fill-in wipe */
+            @keyframes flameFillUp {
+                0% {
+                    clip-path: inset(100% 0 0 0);
+                    opacity: 0;
+                }
+                25% {
+                    opacity: 1;
+                }
+                100% {
+                    clip-path: inset(0% 0 0 0);
+                    opacity: 1;
+                }
+            }
+            /* Flame continuous breathing pulse */
             @keyframes flamePulse {
                 0%, 100% {
                     filter: drop-shadow(0 0 1px rgba(0, 242, 254, 0.7)) drop-shadow(0 0 2px rgba(10, 102, 194, 0.5));
@@ -224,9 +239,69 @@ function renderStreakSvg(stats, options = {}) {
                     transform: scale(1.06);
                 }
             }
+            /* 1st: Current Streak fades in from bottom & pops into place */
+            @keyframes popInCenter {
+                0% {
+                    opacity: 0;
+                    transform: translateY(22px) scale(0.92);
+                }
+                70% {
+                    opacity: 1;
+                    transform: translateY(-3px) scale(1.03);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            /* 2nd: Total Contributions fades in from bottom & pops into place */
+            @keyframes popInLeft {
+                0%, 25% {
+                    opacity: 0;
+                    transform: translateY(22px) scale(0.92);
+                }
+                75% {
+                    opacity: 1;
+                    transform: translateY(-3px) scale(1.03);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            /* 3rd: Longest Streak fades in from bottom & pops into place last */
+            @keyframes popInRight {
+                0%, 50% {
+                    opacity: 0;
+                    transform: translateY(22px) scale(0.92);
+                }
+                85% {
+                    opacity: 1;
+                    transform: translateY(-3px) scale(1.03);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            .fire-wrapper {
+                animation: flameFillUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
             .fire-inner {
                 transform-origin: 12.5px 14px;
-                animation: flamePulse 2.5s infinite ease-in-out;
+                animation: flamePulse 2.5s infinite ease-in-out 0.8s;
+            }
+            .stat-col-center {
+                transform-origin: 247.5px 100px;
+                animation: popInCenter 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+            .stat-col-left {
+                transform-origin: 82.5px 100px;
+                animation: popInLeft 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+            .stat-col-right {
+                transform-origin: 412.5px 100px;
+                animation: popInRight 1.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             .stat-num {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -284,10 +359,10 @@ function renderStreakSvg(stats, options = {}) {
             <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
             <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
 
-            <!-- Center: Current Streak (Flame Above Text) -->
-            <g text-anchor='middle'>
+            <!-- Center: Current Streak (1st: Flame fills + pops in from bottom) -->
+            <g text-anchor='middle' class='stat-col-center'>
                 <!-- Flame Icon centered at x=235, y=16 -->
-                <g transform='translate(235, 16)'>
+                <g transform='translate(235, 16)' class='fire-wrapper'>
                     <g class='fire-inner'>
                         <path d='M10.5 0C10.5 0 11.5 4.5 9 7.5C6.5 10.5 2 11.5 2 17.5C2 23.3 6.7 28 12.5 28C18.3 28 23 23.3 23 17.5C23 10.5 17 6.5 15.5 1.5C15 5 12.5 7.5 11 8.5C11 5 10.5 0 10.5 0ZM12.5 14C14.5 14 16.5 16 16.5 18.5C16.5 21 14.5 23 12.5 23C10.5 23 8.5 21 8.5 18.5C8.5 16.5 10.5 15 12.5 14Z' fill='url(#fireGradient)'/>
                     </g>
@@ -297,17 +372,17 @@ function renderStreakSvg(stats, options = {}) {
                 <text x='247.5' y='154' class='stat-date'>${stats.currentStreakRange}</text>
             </g>
 
-            <!-- Left: Total Contributions -->
-            <g text-anchor='middle'>
+            <!-- Left: Total Contributions (2nd: Pops in from bottom) -->
+            <g text-anchor='middle' class='stat-col-left'>
                 <text x='82.5' y='50' class='stat-label'>Total Contributions</text>
                 <text x='82.5' y='102' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
                 <text x='82.5' y='142' class='stat-date'>${stats.totalRange}</text>
             </g>
 
-            <!-- Right: Longest Streak -->
-            <g text-anchor='middle'>
+            <!-- Right: Longest Streak (3rd: Pops in from bottom last) -->
+            <g text-anchor='middle' class='stat-col-right'>
                 <text x='412.5' y='50' class='stat-label'>Longest Streak</text>
-                <text x='412.5' y='102' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                <text x='412.5' y='102' class='stat-num">${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
                 <text x='412.5' y='142' class='stat-date'>${stats.longestStreakRange}</text>
             </g>
         </g>

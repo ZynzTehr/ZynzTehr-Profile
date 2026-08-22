@@ -221,7 +221,7 @@ function renderStreakSvg(stats, options = {}) {
                 }
                 50% {
                     filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6)) drop-shadow(0 0 18px rgba(0, 242, 254, 0.6));
-                    transform: scale(1.12);
+                    transform: scale(1.06);
                 }
             }
             .fire-inner {

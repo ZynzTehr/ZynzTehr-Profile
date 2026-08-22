@@ -217,14 +217,14 @@ function renderStreakSvg(stats, options = {}) {
             /* Flame bottom-to-top fill-in wipe */
             @keyframes flameFillUp {
                 0% {
-                    clip-path: inset(100% 0 0 0);
+                    clip-path: inset(100% -20px 0% -20px);
                     opacity: 0;
                 }
                 25% {
                     opacity: 1;
                 }
                 100% {
-                    clip-path: inset(0% 0 0 0);
+                    clip-path: inset(-20px -20px -20px -20px);
                     opacity: 1;
                 }
             }

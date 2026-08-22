@@ -216,11 +216,11 @@ function renderStreakSvg(stats, options = {}) {
         <style>
             @keyframes flameGlow {
                 0%, 100% {
-                    filter: drop-shadow(0 0 4px #00f2fe) drop-shadow(0 0 10px #0A66C2);
+                    filter: drop-shadow(0 0 5px rgba(0, 242, 254, 0.6)) drop-shadow(0 0 12px rgba(10, 102, 194, 0.6));
                     transform: scale(1);
                 }
                 50% {
-                    filter: drop-shadow(0 0 8px #00f2fe) drop-shadow(0 0 16px #00f2fe);
+                    filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6)) drop-shadow(0 0 18px rgba(0, 242, 254, 0.6));
                     transform: scale(1.12);
                 }
             }

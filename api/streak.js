@@ -211,18 +211,6 @@ function renderStreakSvg(stats, options = {}) {
     const { hideBorder = true } = options;
     const borderAttr = hideBorder ? "stroke-opacity='0'" : "stroke='rgba(255, 255, 255, 0.1)' stroke-width='1'";
 
-    const digitsLen = stats.currentStreak.toString().length;
-    const textWidth = digitsLen * 18 + 42;
-    const flameWidth = 24;
-    const gap = 8;
-    const totalCenterWidth = flameWidth + gap + textWidth;
-    const centerStartX = 247.5 - (totalCenterWidth / 2);
-    const flameX = centerStartX;
-    const flameY = 74;
-    const textX = centerStartX + flameWidth + gap;
-    const flameCenterOriginX = flameX + 12;
-    const flameCenterOriginY = 90;
-
     return `<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
         style='isolation: isolate' viewBox='0 0 495 195' width='495px' height='195px' direction='ltr'>
         <style>
@@ -233,7 +221,7 @@ function renderStreakSvg(stats, options = {}) {
                 }
                 50% {
                     filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.95)) drop-shadow(0 0 22px rgba(0, 242, 254, 0.7));
-                    transform: scale(1.1);
+                    transform: scale(1.08);
                 }
             }
             @keyframes statFadeIn {
@@ -247,7 +235,7 @@ function renderStreakSvg(stats, options = {}) {
                 }
             }
             .fire-icon {
-                transform-origin: ${flameCenterOriginX}px ${flameCenterOriginY}px;
+                transform-origin: 247.5px 34px;
                 animation: flameGlow 2.5s infinite ease-in-out;
             }
             /* Current streak fades in first */
@@ -318,26 +306,22 @@ function renderStreakSvg(stats, options = {}) {
             <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='col-divider'/>
             <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='col-divider'/>
 
+            <!-- Center: Current Streak (Fades in 1st, flame above text) -->
+            <g text-anchor='middle' class='stat-col-center'>
+                <!-- Flame Icon above Current Streak text -->
+                <g class='fire-icon' transform='translate(233.75, 18) scale(1.15)'>
+                    <path d='M10.5 0C10.5 0 11.5 4.5 9 7.5C6.5 10.5 2 11.5 2 17.5C2 23.3 6.7 28 12.5 28C18.3 28 23 23.3 23 17.5C23 10.5 17 6.5 15.5 1.5C15 5 12.5 7.5 11 8.5C11 5 10.5 0 10.5 0ZM12.5 14C14.5 14 16.5 16 16.5 18.5C16.5 21 14.5 23 12.5 23C10.5 23 8.5 21 8.5 18.5C8.5 16.5 10.5 15 12.5 14Z' fill='url(#fireGradient)'/>
+                </g>
+                <text x='247.5' y='78' class='stat-label'>Current Streak</text>
+                <text x='247.5' y='120' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                <text x='247.5' y='154' class='stat-date'>${stats.currentStreakRange}</text>
+            </g>
+
             <!-- Left: Total Contributions (Fades in 2nd) -->
             <g text-anchor='middle' class='stat-col-left'>
                 <text x='82.5' y='50' class='stat-label'>Total Contributions</text>
                 <text x='82.5' y='102' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
                 <text x='82.5' y='142' class='stat-date'>${stats.totalRange}</text>
-            </g>
-
-            <!-- Center: Current Streak (Fades in 1st) -->
-            <g class='stat-col-center'>
-                <text x='247.5' y='50' text-anchor='middle' class='stat-label'>Current Streak</text>
-                
-                <!-- Flame Icon on Left of Number -->
-                <g class='fire-icon' transform='translate(${flameX.toFixed(1)}, ${flameY}) scale(1.15)'>
-                    <path d='M10.5 0C10.5 0 11.5 4.5 9 7.5C6.5 10.5 2 11.5 2 17.5C2 23.3 6.7 28 12.5 28C18.3 28 23 23.3 23 17.5C23 10.5 17 6.5 15.5 1.5C15 5 12.5 7.5 11 8.5C11 5 10.5 0 10.5 0ZM12.5 14C14.5 14 16.5 16 16.5 18.5C16.5 21 14.5 23 12.5 23C10.5 23 8.5 21 8.5 18.5C8.5 16.5 10.5 15 12.5 14Z' fill='url(#fireGradient)'/>
-                </g>
-                
-                <!-- Number to Right of Flame -->
-                <text x='${textX.toFixed(1)}' y='102' text-anchor='start' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
-                
-                <text x='247.5' y='142' text-anchor='middle' class='stat-date'>${stats.currentStreakRange}</text>
             </g>
 
             <!-- Right: Longest Streak (Fades in 3rd / Last) -->

@@ -68,7 +68,7 @@ I kicked off my coding journey in **2024** and have been deep-diving into full-s
 ## Projects & Work
 
 ### Notable Projects
-- [**Portfolio**](https://github.com/ZynzTehr) - _A personal portfolio website showcasing my latest full-stack projects, technical skills, and development journey._
+- [**Portfolio**](https://zynztehr.github.io/ZynzTehr-Portfolio/) - _A personal portfolio website showcasing my latest full-stack projects, technical skills, and development journey._
 
 **Want to see more?** Check out my [repositories](https://github.com/ZynzTehr?tab=repositories)!
 
@@ -111,7 +111,7 @@ I kicked off my coding journey in **2024** and have been deep-diving into full-s
 </p>
 
 <details>
-  <summary><b>🎨 Click to browse all 10 3D Contribution Themes</b></summary>
+  <summary><b>Click to browse all 10 3D Contribution Themes</b></summary>
   <br/>
 
   ### 1. Night Rainbow

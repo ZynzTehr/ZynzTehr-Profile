@@ -214,22 +214,44 @@ function renderStreakSvg(stats, options = {}) {
     return `<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
         style='isolation: isolate' viewBox='0 0 495 195' width='495px' height='195px' direction='ltr'>
         <style>
-            @keyframes fireGlow {
-                0%, 100% { filter: drop-shadow(0 0 4px #00f2fe); transform: scale(1); }
-                50% { filter: drop-shadow(0 0 10px #00f2fe); transform: scale(1.08); }
+            @keyframes flameGlow {
+                0%, 100% {
+                    filter: drop-shadow(0 0 6px rgba(0, 242, 254, 0.7)) drop-shadow(0 0 14px rgba(10, 102, 194, 0.5));
+                    transform: scale(1);
+                }
+                50% {
+                    filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.95)) drop-shadow(0 0 22px rgba(0, 242, 254, 0.7));
+                    transform: scale(1.08);
+                }
             }
-            @keyframes pulseRing {
-                0% { transform: scale(0.95); opacity: 0.8; }
-                50% { transform: scale(1.05); opacity: 1; }
-                100% { transform: scale(0.95); opacity: 0.8; }
+            @keyframes statFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
             .fire-icon {
-                transform-origin: 247.5px 126px;
-                animation: fireGlow 3s infinite ease-in-out;
+                transform-origin: 247.5px 33.4px;
+                animation: flameGlow 2.5s infinite ease-in-out;
             }
-            .pulse-ring {
-                transform-origin: 247.5px 126px;
-                animation: pulseRing 3s infinite ease-in-out;
+            /* Current streak fades in first */
+            .stat-col-center {
+                animation: statFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+            }
+            /* Total contributions fades in second */
+            .stat-col-left {
+                animation: statFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+            }
+            /* Longest streak fades in last */
+            .stat-col-right {
+                animation: statFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+            }
+            .col-divider {
+                animation: statFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
             }
             .stat-num {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -260,6 +282,17 @@ function renderStreakSvg(stats, options = {}) {
                 <stop offset='0%' stop-color='#0A66C2'/>
                 <stop offset='100%' stop-color='#00f2fe'/>
             </linearGradient>
+            <linearGradient id='fireGradient' x1='0%' y1='100%' x2='0%' y2='0%'>
+                <stop offset='0%' stop-color='#0A66C2'>
+                    <animate attributeName='stop-color' values='#0A66C2;#00f2fe;#7950f2;#0A66C2' dur='4s' repeatCount='indefinite'/>
+                </stop>
+                <stop offset='60%' stop-color='#00f2fe'>
+                    <animate attributeName='stop-color' values='#00f2fe;#7950f2;#00f2fe;#00f2fe' dur='4s' repeatCount='indefinite'/>
+                </stop>
+                <stop offset='100%' stop-color='#ffffff'>
+                    <animate attributeName='stop-color' values='#ffffff;#00f2fe;#ffffff;#ffffff' dur='4s' repeatCount='indefinite'/>
+                </stop>
+            </linearGradient>
             <clipPath id='outer_rect'>
                 <rect width='495' height='195' rx='10'/>
             </clipPath>
@@ -270,34 +303,30 @@ function renderStreakSvg(stats, options = {}) {
             <rect width='495' height='195' fill='url(#bgGradient)' ${borderAttr} rx='10'/>
 
             <!-- Column Dividers -->
-            <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
-            <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
+            <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='col-divider'/>
+            <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='col-divider'/>
 
-            <!-- Left: Total Contributions -->
-            <g text-anchor='middle'>
-                <text x='82.5' y='46' class='stat-label'>Total Contributions</text>
-                <text x='82.5' y='96' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
+            <!-- Center: Current Streak (Fades in 1st) -->
+            <g text-anchor='middle' class='stat-col-center'>
+                <g class='fire-icon' transform='translate(233.75, 18) scale(1.1)'>
+                    <path d='M10.5 0C10.5 0 11.5 4.5 9 7.5C6.5 10.5 2 11.5 2 17.5C2 23.3 6.7 28 12.5 28C18.3 28 23 23.3 23 17.5C23 10.5 17 6.5 15.5 1.5C15 5 12.5 7.5 11 8.5C11 5 10.5 0 10.5 0ZM12.5 14C14.5 14 16.5 16 16.5 18.5C16.5 21 14.5 23 12.5 23C10.5 23 8.5 21 8.5 18.5C8.5 16.5 10.5 15 12.5 14Z' fill='url(#fireGradient)'/>
+                </g>
+                <text x='247.5' y='78' class='stat-label'>Current Streak</text>
+                <text x='247.5' y='120' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                <text x='247.5' y='154' class='stat-date'>${stats.currentStreakRange}</text>
+            </g>
+
+            <!-- Left: Total Contributions (Fades in 2nd) -->
+            <g text-anchor='middle' class='stat-col-left'>
+                <text x='82.5' y='50' class='stat-label'>Total Contributions</text>
+                <text x='82.5' y='102' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
                 <text x='82.5' y='142' class='stat-date'>${stats.totalRange}</text>
             </g>
 
-            <!-- Center: Current Streak (Text on top, Flame below) -->
-            <g text-anchor='middle'>
-                <text x='247.5' y='46' class='stat-label'>Current Streak</text>
-                <text x='247.5' y='96' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
-                
-                <!-- Glowing Flame Circle & Icon Below Text -->
-                <circle cx='247.5' cy='126' r='14' fill='rgba(10, 102, 194, 0.25)' stroke='#00f2fe' stroke-width='1.2' class='pulse-ring'/>
-                <g class='fire-icon'>
-                    <path d='M247.5 117 C245.5 120 243.5 122 243.5 125.5 C243.5 128.5 245.5 130.5 248 130.5 C250.5 130.5 252.5 128.5 252.5 125.5 C252.5 122.5 251 120 247.5 117 Z M247.5 121.5 C248.5 123 249.2 124.5 249.2 126 C249.2 127.5 248.2 129 247.5 129 C246.8 129 245.8 127.5 245.8 126 C245.8 124.5 246.8 123 247.5 121.5 Z' fill='#00f2fe'/>
-                </g>
-
-                <text x='247.5' y='160' class='stat-date'>${stats.currentStreakRange}</text>
-            </g>
-
-            <!-- Right: Longest Streak -->
-            <g text-anchor='middle'>
-                <text x='412.5' y='46' class='stat-label'>Longest Streak</text>
-                <text x='412.5' y='96' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+            <!-- Right: Longest Streak (Fades in 3rd / Last) -->
+            <g text-anchor='middle' class='stat-col-right'>
+                <text x='412.5' y='50' class='stat-label'>Longest Streak</text>
+                <text x='412.5' y='102' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
                 <text x='412.5' y='142' class='stat-date'>${stats.longestStreakRange}</text>
             </g>
         </g>

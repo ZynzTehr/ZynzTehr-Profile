@@ -219,7 +219,7 @@ function renderStreakSvg(stats, options = {}) {
                     transform: scale(1);
                 }
                 50% {
-                    transform: scale(1.06);
+                    transform: scale(1.02);
                 }
             }
             .fire-inner {

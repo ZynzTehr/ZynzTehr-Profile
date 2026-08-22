@@ -223,7 +223,7 @@ function renderStreakSvg(stats, options = {}) {
                 }
             }
             .fire-inner {
-                transform-origin: 12.5px 14px;
+                transform-origin: 6px 8px;
                 animation: flamePulse 2.5s infinite ease-in-out;
             }
             .stat-num {

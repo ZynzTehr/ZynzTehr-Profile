@@ -90,13 +90,15 @@ document.addEventListener("DOMContentLoaded", () => {
         x: -20,
         opacity: 0,
         duration: 0.5,
-        ease: "back.out(1.7)"
+        ease: "back.out(1.7)",
+        clearProps: "opacity,transform"
     }, "-=0.2")
     .from(".hero-cta .btn-secondary", {
         x: 20,
         opacity: 0,
         duration: 0.5,
-        ease: "back.out(1.7)"
+        ease: "back.out(1.7)",
+        clearProps: "opacity,transform"
     }, "-=0.4")
     .from(".scroll-indicator", {
         opacity: 0,

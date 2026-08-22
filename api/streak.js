@@ -214,19 +214,17 @@ function renderStreakSvg(stats, options = {}) {
     return `<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
         style='isolation: isolate' viewBox='0 0 495 195' width='495px' height='195px' direction='ltr'>
         <style>
-            @keyframes flameGlow {
+            @keyframes flamePulse {
                 0%, 100% {
-                    filter: drop-shadow(0 0 5px rgba(0, 242, 254, 0.6)) drop-shadow(0 0 12px rgba(10, 102, 194, 0.6));
                     transform: scale(1);
                 }
                 50% {
-                    filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6)) drop-shadow(0 0 18px rgba(0, 242, 254, 0.6));
                     transform: scale(1.06);
                 }
             }
             .fire-inner {
                 transform-origin: 12.5px 14px;
-                animation: flameGlow 2.5s infinite ease-in-out;
+                animation: flamePulse 2.5s infinite ease-in-out;
             }
             .stat-num {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

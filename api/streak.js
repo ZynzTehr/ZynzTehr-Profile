@@ -213,7 +213,7 @@ function renderStreakSvg(stats, options = {}) {
 
     return `<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'
         style='isolation: isolate' viewBox='0 0 495 195' width='495px' height='195px' direction='ltr'>
-        <style>
+        <style><![CDATA[
             /* Flame bottom-to-top fill-in wipe */
             @keyframes flameFillUp {
                 0% {
@@ -239,7 +239,7 @@ function renderStreakSvg(stats, options = {}) {
                     transform: scale(1.06);
                 }
             }
-            /* 1st: Current Streak fades in from bottom & pops into place */
+            /* 1st: Current Streak fades in from bottom and pops into place */
             @keyframes popInCenter {
                 0% {
                     opacity: 0;
@@ -254,7 +254,7 @@ function renderStreakSvg(stats, options = {}) {
                     transform: translateY(0) scale(1);
                 }
             }
-            /* 2nd: Total Contributions fades in from bottom & pops into place */
+            /* 2nd: Total Contributions fades in from bottom and pops into place */
             @keyframes popInLeft {
                 0%, 25% {
                     opacity: 0;
@@ -269,7 +269,7 @@ function renderStreakSvg(stats, options = {}) {
                     transform: translateY(0) scale(1);
                 }
             }
-            /* 3rd: Longest Streak fades in from bottom & pops into place last */
+            /* 3rd: Longest Streak fades in from bottom and pops into place last */
             @keyframes popInRight {
                 0%, 50% {
                     opacity: 0;
@@ -322,7 +322,7 @@ function renderStreakSvg(stats, options = {}) {
                 font-size: 11px;
                 fill: #8b949e;
             }
-        </style>
+        ]]></style>
         <defs>
             <linearGradient id='bgGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
                 <stop offset='0%' stop-color='#0d1117'/>
@@ -382,7 +382,7 @@ function renderStreakSvg(stats, options = {}) {
             <!-- Right: Longest Streak (3rd: Pops in from bottom last) -->
             <g text-anchor='middle' class='stat-col-right'>
                 <text x='412.5' y='50' class='stat-label'>Longest Streak</text>
-                <text x='412.5' y='102' class='stat-num">${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                <text x='412.5' y='102' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
                 <text x='412.5' y='142' class='stat-date'>${stats.longestStreakRange}</text>
             </g>
         </g>

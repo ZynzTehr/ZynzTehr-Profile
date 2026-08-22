@@ -4,7 +4,18 @@ export default async function handler(req, res) {
     const token = process.env.PAT_1 || process.env.GITHUB_TOKEN || process.env.TOKEN || "";
 
     try {
-        const stats = await getContributionStats(user, token);
+        let stats;
+        if (token) {
+            try {
+                stats = await getStatsViaGraphQL(user, token);
+            } catch (err) {
+                console.warn("GraphQL failed, falling back to public calendar:", err.message);
+                stats = await getStatsViaPublicCalendar(user);
+            }
+        } else {
+            stats = await getStatsViaPublicCalendar(user);
+        }
+
         const svg = renderStreakSvg(stats, { hideBorder: hide_border === "true" });
 
         res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
@@ -12,22 +23,19 @@ export default async function handler(req, res) {
         return res.status(200).send(svg);
     } catch (error) {
         console.error("Streak calculation error:", error);
-        // Graceful fallback SVG
         const fallbackSvg = renderFallbackSvg(user, error.message);
         res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
-        res.setHeader("Cache-Control", "public, max-age=300");
+        res.setHeader("Cache-Control", "public, max-age=60");
         return res.status(200).send(fallbackSvg);
     }
 }
 
-async function getContributionStats(username, token) {
+async function getStatsViaGraphQL(username, token) {
     const headers = {
         "Content-Type": "application/json",
-        "User-Agent": "ZynzTehr-Streak-Service"
+        "User-Agent": "ZynzTehr-Streak-Service",
+        "Authorization": `bearer ${token}`
     };
-    if (token) {
-        headers["Authorization"] = `bearer ${token}`;
-    }
 
     // 1. Get user account creation date
     const userQuery = `
@@ -52,7 +60,7 @@ async function getContributionStats(username, token) {
     const createdYear = new Date(userData.data.user.createdAt).getFullYear();
     const currentYear = new Date().getFullYear();
 
-    // 2. Fetch all years in single multi-alias GraphQL query
+    // 2. Fetch all years
     let multiYearQuery = "query($login: String!) { user(login: $login) {";
     for (let yr = createdYear; yr <= currentYear; yr++) {
         const from = `${yr}-01-01T00:00:00Z`;
@@ -81,10 +89,9 @@ async function getContributionStats(username, token) {
     const calendarData = await calendarRes.json();
 
     if (!calendarData.data || !calendarData.data.user) {
-        throw new Error(calendarData.errors ? calendarData.errors[0].message : "Failed to fetch calendar");
+        throw new Error(calendarData.errors ? calendarData.errors[0].message : "Calendar fetch failed");
     }
 
-    // Aggregate contributions chronologically
     const daysMap = new Map();
     let totalContributions = 0;
     const userObj = calendarData.data.user;
@@ -101,9 +108,35 @@ async function getContributionStats(username, token) {
         }
     }
 
+    return calculateStreaksFromMap(daysMap, totalContributions);
+}
+
+async function getStatsViaPublicCalendar(username) {
+    const res = await fetch(`https://github.com/users/${username}/contributions`, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)"
+        }
+    });
+    const html = await res.text();
+
+    const totalMatch = html.match(/([0-9,]+)\s*contributions\s*in the last year/i);
+    const totalContributions = totalMatch ? parseInt(totalMatch[1].replace(/,/g, "")) : 0;
+
+    const dayRegex = /data-date="([0-9]{4}-[0-9]{2}-[0-9]{2})"[^>]*>[\s\S]*?<tool-tip[^>]*>(No|[0-9]+)/g;
+    let match;
+    const daysMap = new Map();
+    while ((match = dayRegex.exec(html)) !== null) {
+        const date = match[1];
+        const count = match[2] === "No" ? 0 : parseInt(match[2]);
+        daysMap.set(date, count);
+    }
+
+    return calculateStreaksFromMap(daysMap, totalContributions);
+}
+
+function calculateStreaksFromMap(daysMap, totalContributions) {
     const sortedDates = Array.from(daysMap.keys()).sort();
 
-    // Compute Streaks
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
@@ -124,9 +157,7 @@ async function getContributionStats(username, token) {
         const count = daysMap.get(date) || 0;
 
         if (count > 0) {
-            if (tempStreak === 0) {
-                tempStart = date;
-            }
+            if (tempStreak === 0) tempStart = date;
             tempStreak++;
             if (tempStreak > longestStreak) {
                 longestStreak = tempStreak;

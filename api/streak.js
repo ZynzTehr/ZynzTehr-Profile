@@ -216,11 +216,11 @@ function renderStreakSvg(stats, options = {}) {
         <style>
             @keyframes flamePulse {
                 0%, 100% {
-                    filter: drop-shadow(0 0 2px rgba(0, 242, 254, 0.7)) drop-shadow(0 0 4px rgba(10, 102, 194, 0.5));
+                    filter: drop-shadow(0 0 1px rgba(0, 242, 254, 0.7)) drop-shadow(0 0 2px rgba(10, 102, 194, 0.5));
                     transform: scale(1);
                 }
                 50% {
-                    filter: drop-shadow(0 0 3px rgba(0, 242, 254, 0.85)) drop-shadow(0 0 5px rgba(0, 242, 254, 0.6));
+                    filter: drop-shadow(0 0 2px rgba(0, 242, 254, 0.85)) drop-shadow(0 0 3px rgba(0, 242, 254, 0.6));
                     transform: scale(1.06);
                 }
             }

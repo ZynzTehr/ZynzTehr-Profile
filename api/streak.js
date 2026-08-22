@@ -224,11 +224,11 @@ function renderStreakSvg(stats, options = {}) {
                 100% { transform: scale(0.95); opacity: 0.8; }
             }
             .fire-icon {
-                transform-origin: 247.5px 44px;
+                transform-origin: 247.5px 126px;
                 animation: fireGlow 3s infinite ease-in-out;
             }
             .pulse-ring {
-                transform-origin: 247.5px 44px;
+                transform-origin: 247.5px 126px;
                 animation: pulseRing 3s infinite ease-in-out;
             }
             .stat-num {
@@ -275,27 +275,29 @@ function renderStreakSvg(stats, options = {}) {
 
             <!-- Left: Total Contributions -->
             <g text-anchor='middle'>
-                <text x='82.5' y='50' class='stat-label'>Total Contributions</text>
-                <text x='82.5' y='102' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
+                <text x='82.5' y='46' class='stat-label'>Total Contributions</text>
+                <text x='82.5' y='96' class='stat-num'>${stats.totalContributions.toLocaleString()}</text>
                 <text x='82.5' y='142' class='stat-date'>${stats.totalRange}</text>
             </g>
 
-            <!-- Center: Current Streak -->
+            <!-- Center: Current Streak (Text on top, Flame below) -->
             <g text-anchor='middle'>
-                <!-- Glowing Fire Circle & Icon -->
-                <circle cx='247.5' cy='44' r='20' fill='rgba(10, 102, 194, 0.25)' stroke='#00f2fe' stroke-width='1.5' class='pulse-ring'/>
+                <text x='247.5' y='46' class='stat-label'>Current Streak</text>
+                <text x='247.5' y='96' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                
+                <!-- Glowing Flame Circle & Icon Below Text -->
+                <circle cx='247.5' cy='126' r='14' fill='rgba(10, 102, 194, 0.25)' stroke='#00f2fe' stroke-width='1.2' class='pulse-ring'/>
                 <g class='fire-icon'>
-                    <path d='M247.5 32 C245 36 242 38 242 43 C242 47 245 50 248.5 50 C252 50 255 47 255 43 C255 39 253 36 247.5 32 Z M247.5 38 C249 40 250 42 250 44 C250 46 248.5 48 247.5 48 C246.5 48 245 46 245 44 C245 42 246.5 40 247.5 38 Z' fill='#00f2fe'/>
+                    <path d='M247.5 117 C245.5 120 243.5 122 243.5 125.5 C243.5 128.5 245.5 130.5 248 130.5 C250.5 130.5 252.5 128.5 252.5 125.5 C252.5 122.5 251 120 247.5 117 Z M247.5 121.5 C248.5 123 249.2 124.5 249.2 126 C249.2 127.5 248.2 129 247.5 129 C246.8 129 245.8 127.5 245.8 126 C245.8 124.5 246.8 123 247.5 121.5 Z' fill='#00f2fe'/>
                 </g>
-                <text x='247.5' y='82' class='stat-label'>Current Streak</text>
-                <text x='247.5' y='122' class='stat-num' fill='url(#accentGrad)'>${stats.currentStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
-                <text x='247.5' y='154' class='stat-date'>${stats.currentStreakRange}</text>
+
+                <text x='247.5' y='160' class='stat-date'>${stats.currentStreakRange}</text>
             </g>
 
             <!-- Right: Longest Streak -->
             <g text-anchor='middle'>
-                <text x='412.5' y='50' class='stat-label'>Longest Streak</text>
-                <text x='412.5' y='102' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
+                <text x='412.5' y='46' class='stat-label'>Longest Streak</text>
+                <text x='412.5' y='96' class='stat-num'>${stats.longestStreak} <tspan font-size='16' font-weight='500' fill='#8b949e'>days</tspan></text>
                 <text x='412.5' y='142' class='stat-date'>${stats.longestStreakRange}</text>
             </g>
         </g>

@@ -313,7 +313,7 @@ function renderStreakSvg(stats, options = {}) {
                 animation: popInRight 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             .card-bg, .card-divider {
-                animation: fadeInBgAndLines 4s ease-out forwards;
+                animation: fadeInBgAndLines 3s ease-out forwards;
             }
             .stat-num {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

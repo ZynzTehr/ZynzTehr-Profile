@@ -85,7 +85,7 @@ I kicked off my coding journey in **2024** and have been deep-diving into full-s
 ## GitHub Stats
 
 <p align="center">
-  <img src="https://zynz-tehr-streak-stats.vercel.app/?user=ZynzTehr&theme=github-dark-blue&hide_border=true" alt="GitHub Streak" />
+  <img src="https://zynz-tehr-profile.vercel.app/api/streak?user=ZynzTehr" alt="GitHub Streak" />
 </p>
 
 ---

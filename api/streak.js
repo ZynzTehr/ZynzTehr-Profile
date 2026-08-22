@@ -284,8 +284,17 @@ function renderStreakSvg(stats, options = {}) {
                     transform: translateY(0) scale(1);
                 }
             }
+            /* Background and Section Dividers fade in at the 3s mark to wrap everything smoothly */
+            @keyframes fadeInBgAndLines {
+                0%, 75% {
+                    opacity: 0;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
             .fire-wrapper {
-                animation: flameFillUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation: flameFillUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
             .fire-inner {
                 transform-origin: 12.5px 14px;
@@ -293,15 +302,18 @@ function renderStreakSvg(stats, options = {}) {
             }
             .stat-col-center {
                 transform-origin: 247.5px 100px;
-                animation: popInCenter 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                animation: popInCenter 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             .stat-col-left {
                 transform-origin: 82.5px 100px;
-                animation: popInLeft 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                animation: popInLeft 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
             .stat-col-right {
                 transform-origin: 412.5px 100px;
-                animation: popInRight 1.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                animation: popInRight 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+            .card-bg, .card-divider {
+                animation: fadeInBgAndLines 4s ease-out forwards;
             }
             .stat-num {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -353,11 +365,11 @@ function renderStreakSvg(stats, options = {}) {
         </defs>
 
         <g clip-path='url(#outer_rect)'>
-            <rect width='495' height='195' fill='url(#bgGradient)' ${borderAttr} rx='10'/>
+            <rect width='495' height='195' fill='url(#bgGradient)' ${borderAttr} rx='10' class='card-bg'/>
 
             <!-- Column Dividers -->
-            <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
-            <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1'/>
+            <line x1='165' y1='28' x2='165' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='card-divider'/>
+            <line x1='330' y1='28' x2='330' y2='167' stroke='rgba(255, 255, 255, 0.08)' stroke-width='1' class='card-divider'/>
 
             <!-- Center: Current Streak (1st: Flame fills + pops in from bottom) -->
             <g text-anchor='middle' class='stat-col-center'>

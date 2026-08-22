@@ -216,14 +216,16 @@ function renderStreakSvg(stats, options = {}) {
         <style>
             @keyframes flamePulse {
                 0%, 100% {
+                    filter: drop-shadow(0 0 2px rgba(0, 242, 254, 0.7)) drop-shadow(0 0 4px rgba(10, 102, 194, 0.5));
                     transform: scale(1);
                 }
                 50% {
-                    transform: scale(1.02);
+                    filter: drop-shadow(0 0 3px rgba(0, 242, 254, 0.85)) drop-shadow(0 0 5px rgba(0, 242, 254, 0.6));
+                    transform: scale(1.06);
                 }
             }
             .fire-inner {
-                transform-origin: 6px 8px;
+                transform-origin: 12.5px 14px;
                 animation: flamePulse 2.5s infinite ease-in-out;
             }
             .stat-num {
@@ -255,15 +257,19 @@ function renderStreakSvg(stats, options = {}) {
                 <stop offset='0%' stop-color='#0A66C2'/>
                 <stop offset='100%' stop-color='#00f2fe'/>
             </linearGradient>
+            <!-- Bottom-to-Top Rising Heat Gradient -->
             <linearGradient id='fireGradient' x1='0%' y1='100%' x2='0%' y2='0%'>
+                <!-- Bottom (y=100%): Leads the color shift -->
                 <stop offset='0%' stop-color='#0A66C2'>
-                    <animate attributeName='stop-color' values='#0A66C2;#00f2fe;#7950f2;#0A66C2' dur='4s' repeatCount='indefinite'/>
+                    <animate attributeName='stop-color' values='#0A66C2;#00f2fe;#ffffff;#7950f2;#0A66C2' dur='3.5s' repeatCount='indefinite'/>
                 </stop>
-                <stop offset='60%' stop-color='#00f2fe'>
-                    <animate attributeName='stop-color' values='#00f2fe;#7950f2;#00f2fe;#00f2fe' dur='4s' repeatCount='indefinite'/>
+                <!-- Mid (y=50%): Follows bottom -->
+                <stop offset='50%' stop-color='#7950f2'>
+                    <animate attributeName='stop-color' values='#7950f2;#0A66C2;#00f2fe;#ffffff;#7950f2' dur='3.5s' repeatCount='indefinite'/>
                 </stop>
+                <!-- Top (y=0%): Receives colors rising to the tip -->
                 <stop offset='100%' stop-color='#ffffff'>
-                    <animate attributeName='stop-color' values='#ffffff;#00f2fe;#ffffff;#ffffff' dur='4s' repeatCount='indefinite'/>
+                    <animate attributeName='stop-color' values='#ffffff;#7950f2;#0A66C2;#00f2fe;#ffffff' dur='3.5s' repeatCount='indefinite'/>
                 </stop>
             </linearGradient>
             <clipPath id='outer_rect'>

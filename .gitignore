@@ -18,5 +18,48 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Vercel
+# Vercel & Vite build/verification outputs
 .vercel
+/dist/
+/shots/
+*.tsbuildinfo
+/test-results/
+/playwright-report/
+
+# Local untracked agent source copy
+/MyNewAgent/
+/myAgent/
+
+# Local agent records, backups, and locks
+/prompt-log.md
+/.prompt-log.lock/
+/.prompt-log.flock
+/.agent-usage.jsonl
+/.agent-usage.lock
+/.agent-usage-*.tmp
+/PROGRESS.md
+/.agents-backup-*/
+/.agents-staging-*/
+/.myagent-install.lock/
+/.myagent-hooks.lock/
+/.myagent-hooks-backup-*/
+/.myagent-hooks-stage-*/
+/.agents/**/__pycache__/
+/.agent-evidence.jsonl
+/.agent-evidence.lock
+/.agent-evidence-*.jsonl
+/.agents/**/node_modules/
+/.claude/settings.local.json
+/.scratch/_improve/runs/
+/.scratch/_improve/harness/
+/.scratch/_improve/.ledger.lock
+/.agents/custom/*.user.json
+/.pr-wait/
+
+# Local agent harness, design scratchpad, and raw master plates
+/AGENTS.md
+/.agents/
+/.scratch/
+/assets-raw/
+/CONTEXT.md
+/DESIGN.md

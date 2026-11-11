@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="ZT Monogram">
+  <style>
+    .tile { fill: #211813; }
+    .rim { stroke: #3A2D25; stroke-opacity: 0.55; }
+    .rail { fill: #F7F1E6; }
+    .dot { fill: #FFB000; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #161210; }
+      .rim { stroke: #4A392E; stroke-opacity: 0.9; }
+      .rail { fill: #F7F1E6; }
+      .dot { fill: #FFB000; }
+    }
+  </style>
+  <rect class="tile" x="1" y="1" width="30" height="30" rx="6.5" />
+  <rect class="rim" x="1.5" y="1.5" width="29" height="29" rx="6" fill="none" stroke-width="1" />
+  <!-- Interlocking Yard Switch Z + T rail geometry -->
+  <path class="rail" d="M6.5 8.5H19.5V11.3L11.2 20.7H18.5V23.5H6.5V20.7L14.8 11.3H6.5V8.5Z" />
+  <path class="rail" d="M16.5 13.5H25.5V16.3H22.45V23.5H19.55V16.3H16.5V13.5Z" />
+  <!-- Amber dispatch switch lock indicator -->
+  <circle class="dot" cx="24.2" cy="9.8" r="2.2" />
+</svg>

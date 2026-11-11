@@ -1,0 +1,32 @@
+@import "@fontsource-variable/imbue/opsz.css";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
+@import "@fontsource-variable/jost/wght.css";
+@import "@fontsource/nothing-you-could-do/400.css";
+@import "tailwindcss" source(none);
+@source "../../index.html";
+@source "../";
+@import "./materials.css";
+
+@layer base {
+  html {
+    overflow-x: clip;
+    background-color: var(--bg-travertine);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    overflow-x: clip;
+    font-family: var(--font-serif);
+  }
+}

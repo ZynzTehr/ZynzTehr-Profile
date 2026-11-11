@@ -1,0 +1,331 @@
+/* Metric-matched fallback faces so SplitText line breaks stay stable before variable fonts finish decoding */
+@font-face {
+  font-family: "Imbue Fallback";
+  src: local("Times New Roman"), local("Georgia");
+  size-adjust: 74%;
+  ascent-override: 102%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia"), local("Times New Roman");
+  size-adjust: 97%;
+  ascent-override: 96%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Jost Fallback";
+  src: local("Helvetica Neue"), local("Arial");
+  size-adjust: 98%;
+  ascent-override: 98%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --bg-travertine: #ddd2c0;
+  --bg-espresso: #251b16;
+  --bg-limewash: #eae2d4;
+  --bg-olive: #1f2e26;
+  --bg-calico: #e2d6c1;
+  --bg-sand: #d1c3ad;
+  --surface-rag: #f7f1e6;
+  --surface-rag-warm: #f2e9d8;
+
+  --ink-espresso: #211813;
+  --ink-body-dark: #3b2f27;
+  --ink-muted-dark: #5b4a3e;
+  --ink-cream: #f4eee3;
+  --ink-cream-soft: #dad0c3;
+  --ink-olive-cream: #eae4d7;
+
+  --accent-monarch: #a64028;
+  --accent-monarch-deep: #8c311c;
+  --accent-monarch-light: #e49a7e;
+  --accent-brass: #9f7c46;
+  --accent-sage: #cde0c0;
+
+  --font-display: "Imbue Variable", "Imbue Fallback", Georgia, serif;
+  --font-serif: "Newsreader Variable", "Newsreader Fallback", Georgia, serif;
+  --font-util: "Jost Variable", "Jost Fallback", system-ui, sans-serif;
+  --font-hand: "Nothing You Could Do", cursive;
+}
+
+@layer components {
+  /* Tactile pre-baked cotton-rag & stone material grounds (zero live feTurbulence raster cost) */
+  .material-travertine {
+    background-color: var(--bg-travertine);
+    background-image:
+      radial-gradient(120% 90% at 18% 12%, rgba(255, 250, 240, 0.45), transparent 62%),
+      radial-gradient(95% 85% at 88% 88%, rgba(164, 138, 108, 0.22), transparent 68%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .material-espresso {
+    background-color: var(--bg-espresso);
+    color: var(--ink-cream);
+    background-image:
+      radial-gradient(110% 80% at 74% 18%, rgba(92, 62, 43, 0.28), transparent 64%),
+      radial-gradient(95% 95% at 12% 85%, rgba(15, 10, 8, 0.46), transparent 72%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .material-limewash {
+    background-color: var(--bg-limewash);
+    color: var(--ink-espresso);
+    background-image:
+      radial-gradient(115% 85% at 15% 15%, rgba(255, 252, 246, 0.56), transparent 58%),
+      radial-gradient(95% 85% at 86% 84%, rgba(188, 171, 146, 0.25), transparent 66%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .material-olive {
+    background-color: var(--bg-olive);
+    color: var(--ink-cream);
+    background-image:
+      radial-gradient(105% 82% at 82% 14%, rgba(69, 98, 79, 0.32), transparent 62%),
+      radial-gradient(90% 90% at 14% 88%, rgba(12, 20, 16, 0.48), transparent 70%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .material-calico {
+    background-color: var(--bg-calico);
+    color: var(--ink-espresso);
+    background-image:
+      radial-gradient(110% 80% at 78% 18%, rgba(255, 249, 238, 0.5), transparent 60%),
+      radial-gradient(90% 80% at 18% 85%, rgba(178, 156, 126, 0.26), transparent 68%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .material-sand {
+    background-color: var(--bg-sand);
+    color: var(--ink-espresso);
+    background-image:
+      radial-gradient(110% 88% at 24% 12%, rgba(252, 245, 233, 0.46), transparent 58%),
+      radial-gradient(95% 85% at 84% 88%, rgba(154, 132, 103, 0.24), transparent 68%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .surface-cotton-rag {
+    background-color: var(--surface-rag);
+    color: var(--ink-espresso);
+    background-image:
+      linear-gradient(180deg, rgba(255, 253, 249, 0.72) 0%, rgba(244, 236, 222, 0.42) 100%),
+      url("/media/paper-grain.webp");
+    background-size: auto, 192px 192px;
+    background-blend-mode: normal, soft-light;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.82) inset,
+      0 22px 48px -20px rgba(33, 24, 19, 0.24),
+      0 2px 6px rgba(33, 24, 19, 0.08);
+  }
+
+  /* Editorial typography helpers */
+  .font-display-didone {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 100, "wght" 280;
+    letter-spacing: -0.015em;
+  }
+
+  .font-editorial-serif {
+    font-family: var(--font-serif);
+    font-variation-settings: "opsz" 24;
+  }
+
+  .font-editorial-italic {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-variation-settings: "opsz" 48;
+  }
+
+  .font-utility {
+    font-family: var(--font-util);
+  }
+
+  .font-studio-hand {
+    font-family: var(--font-hand);
+  }
+
+  .hero-display-mark {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 100, "wght" 265;
+    font-size: clamp(5.2rem, 17.2vw, 15.5rem);
+    line-height: 0.79;
+    letter-spacing: -0.016em;
+  }
+
+  .chapter-display-heading {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 84, "wght" 300;
+    font-size: clamp(3.35rem, 8.2vw, 7.9rem);
+    line-height: 0.88;
+    letter-spacing: -0.012em;
+  }
+
+  .split-line-mask {
+    padding-bottom: 0.14em;
+    margin-bottom: -0.14em;
+  }
+
+  /* Tactile hairline ink-draw underline for navigation and channel links */
+  .editorial-link-line {
+    position: relative;
+  }
+
+  .editorial-link-line::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.45rem;
+    height: 1.25px;
+    background-color: currentColor;
+    opacity: 0.65;
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .editorial-link-line:hover::after,
+  .editorial-link-line:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  /* Subtle warm studio sheen across interactive buttons */
+  .editorial-btn-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .editorial-btn-sheen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      112deg,
+      transparent 22%,
+      rgba(255, 248, 234, 0.22) 50%,
+      transparent 78%
+    );
+    transform: translateX(-115%);
+    transition: transform 0.68s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .editorial-btn-sheen:hover::before,
+  .editorial-btn-sheen:focus-visible::before {
+    transform: translateX(115%);
+  }
+
+  .atelier-plumb-traveler {
+    animation: atelier-plumb-travel 3.2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  }
+
+  .atelier-plumb-dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: atelier-plumb-dot-morph 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .atelier-plumb-arrow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: atelier-plumb-arrow-morph 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+}
+
+@keyframes atelier-plumb-travel {
+  0% {
+    transform: translateY(21px);
+    opacity: 0;
+  }
+  10% {
+    transform: translateY(21px);
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(73px);
+    opacity: 1;
+  }
+  88% {
+    transform: translateY(75px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(76px);
+    opacity: 0;
+  }
+}
+
+@keyframes atelier-plumb-dot-morph {
+  0%,
+  52% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+}
+
+@keyframes atelier-plumb-arrow-morph {
+  0%,
+  53% {
+    opacity: 0;
+    transform: scale(0.32);
+  }
+  67%,
+  90% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+/* Accessible focus ring matching studio brass & Monarch terracotta */
+:focus-visible {
+  outline: 2px solid var(--accent-monarch);
+  outline-offset: 3px;
+}
+
+.material-espresso :focus-visible,
+.material-olive :focus-visible {
+  outline-color: var(--accent-monarch-light);
+}
+
+dialog::backdrop {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

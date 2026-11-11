@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 function stripPermittedEmail(input: string): string {
-  return input.replaceAll(CONTACT_EMAIL, "");
+  return input.replaceAll(CONTACT_EMAIL, "").replaceAll("work.jorgebucio.com", "");
 }
 
 describe("Phase 2: MonarchReliefCanvas, MenuOverlay, and Hero-Only Name Rule", () => {

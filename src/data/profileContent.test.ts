@@ -40,7 +40,7 @@ function collectVisibleStrings(value: unknown, skipKeys: ReadonlySet<string> = n
 
 describe("profileContent invariants", () => {
   it("keeps canonical external and contact constants exact", () => {
-    expect(PORTFOLIO_URL).toBe("https://zynztehr.github.io/ZynzTehr-Portfolio/");
+    expect(PORTFOLIO_URL).toBe("https://work.jorgebucio.com/");
     expect(GITHUB_URL).toBe("https://github.com/ZynzTehr");
     expect(GITHUB_REPOS_URL).toBe("https://github.com/ZynzTehr?tab=repositories");
     expect(LINKEDIN_URL).toBe("https://www.linkedin.com/in/jorge-bucio-876738393/");
@@ -69,7 +69,9 @@ describe("profileContent invariants", () => {
     );
 
     for (const text of nonHeroVisible) {
-      const sanitized = text.replaceAll(CONTACT_EMAIL, "");
+      const sanitized = text
+        .replaceAll(CONTACT_EMAIL, "")
+        .replaceAll("work.jorgebucio.com", "");
       expect(sanitized, `Unexpected name match inside: "${text}"`).not.toMatch(PERSONAL_NAME);
     }
   });

@@ -1,4 +1,4 @@
-export const PORTFOLIO_URL = "https://zynztehr.github.io/ZynzTehr-Portfolio/";
+export const PORTFOLIO_URL = "https://work.jorgebucio.com/";
 export const GITHUB_URL = "https://github.com/ZynzTehr";
 export const GITHUB_REPOS_URL = "https://github.com/ZynzTehr?tab=repositories";
 export const LINKEDIN_URL = "https://www.linkedin.com/in/jorge-bucio-876738393/";
@@ -461,7 +461,7 @@ export const PORTFOLIO_CONTENT: PortfolioPortalContent = {
   headlineItalic: "motion.",
   description:
     "Full interactive applications, live deployments, and architectural walkthroughs live in a dedicated 3D WebGL portfolio space built to let each project speak at full scale.",
-  caption: "External 3D WebGL Showcase · zynztehr.github.io/ZynzTehr-Portfolio",
+  caption: "External 3D WebGL Showcase · work.jorgebucio.com",
   primaryLabel: "Open Live Portfolio",
   secondaryLabel: "All GitHub Repos",
   handNote: "Selected applications & experiments",
@@ -483,7 +483,7 @@ export const CONNECT_CONTENT: ConnectContent = {
     {
       id: "portfolio",
       label: "Interactive Portfolio",
-      valueLabel: "ZynzTehr-Portfolio",
+      valueLabel: "work.jorgebucio.com",
       href: PORTFOLIO_URL,
       external: true,
     },

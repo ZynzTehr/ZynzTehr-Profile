@@ -40,7 +40,7 @@ const originalMatchMedia = window.matchMedia;
 const originalClipboard = navigator.clipboard;
 
 function stripPermittedEmail(input: string): string {
-  return input.replaceAll(CONTACT_EMAIL, "");
+  return input.replaceAll(CONTACT_EMAIL, "").replaceAll("work.jorgebucio.com", "");
 }
 
 afterEach(() => {

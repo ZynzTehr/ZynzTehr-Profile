@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 const CONTACT_EMAIL = "jorgeforwork88@gmail.com";
-const PORTFOLIO_URL = "https://zynztehr.github.io/ZynzTehr-Portfolio/";
+const PORTFOLIO_URL = "https://work.jorgebucio.com/";
 const GITHUB_URL = "https://github.com/ZynzTehr";
 const GITHUB_REPOS_URL = "https://github.com/ZynzTehr?tab=repositories";
 const LINKEDIN_URL = "https://www.linkedin.com/in/jorge-bucio-876738393/";
@@ -377,7 +377,7 @@ async function assertDomWideE1Invariants(page: Page, contextLabel: string): Prom
       if (!raw || !parent) continue;
       if (parent.closest("script, style")) continue;
       if (parent.closest('[data-act="00-hero"]')) continue;
-      const cleaned = raw.replaceAll(email, "");
+      const cleaned = raw.replaceAll(email, "").replaceAll("work.jorgebucio.com", "");
       if (/jorge|bucio/i.test(cleaned)) {
         nameHits.push(`text(${parent.tagName.toLowerCase()}): ${cleaned.slice(0, 96)}`);
       }
@@ -385,8 +385,12 @@ async function assertDomWideE1Invariants(page: Page, contextLabel: string): Prom
 
     // 2. All [alt] and [aria-label] attributes across the entire document.body (including [data-act="00-hero"] & [data-slot="monarch-plate-frame"])
     for (const el of document.body.querySelectorAll("[alt], [aria-label]")) {
-      const alt = (el.getAttribute("alt") ?? "").replaceAll(email, "");
-      const label = (el.getAttribute("aria-label") ?? "").replaceAll(email, "");
+      const alt = (el.getAttribute("alt") ?? "")
+        .replaceAll(email, "")
+        .replaceAll("work.jorgebucio.com", "");
+      const label = (el.getAttribute("aria-label") ?? "")
+        .replaceAll(email, "")
+        .replaceAll("work.jorgebucio.com", "");
       if (/jorge|bucio/i.test(alt)) {
         nameHits.push(`alt(${el.tagName.toLowerCase()}): ${alt.slice(0, 96)}`);
       }
@@ -809,7 +813,7 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
       const mobileHeroCtas = await page.evaluate(() => {
         const ctas = Array.from(
           document.querySelectorAll<HTMLAnchorElement>(
-            '[data-act="00-hero"] a[href*="ZynzTehr-Portfolio"], [data-act="00-hero"] a[href="#connect"]',
+            '[data-act="00-hero"] a[href*="work.jorgebucio.com"], [data-act="00-hero"] a[href="#connect"]',
           ),
         );
         return ctas.map((a) => {

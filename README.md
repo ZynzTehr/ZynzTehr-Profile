@@ -13,7 +13,7 @@
 | Channel | Destination | Purpose |
 | :--- | :--- | :--- |
 | **Live Web Profile** | [jorgebucio.com](https://jorgebucio.com/) | Six-act interactive capability folio built with React 19, TypeScript, Tailwind CSS v4, GSAP, Motion, Lenis, and Three.js GLSL shaders, also reachable via [zynztehr.dev](https://zynztehr.dev/) |
-| **Live Portfolio** | [zynztehr.github.io/ZynzTehr-Portfolio](https://zynztehr.github.io/ZynzTehr-Portfolio/) | Dedicated 3D WebGL portfolio indexing shipped full-stack applications and interactive builds |
+| **Live Portfolio** | [work.jorgebucio.com](https://work.jorgebucio.com/) | Dedicated 3D WebGL portfolio indexing shipped full-stack applications and interactive builds |
 | **GitHub Repositories** | [github.com/ZynzTehr](https://github.com/ZynzTehr?tab=repositories) | Public source trees, commit history, and automated test suites |
 | **LinkedIn** | [linkedin.com/in/jorge-alberto-bucio](https://www.linkedin.com/in/jorge-bucio-876738393/) | Work history and professional correspondence |
 | **Direct Email** | [jorgeforwork88@gmail.com](mailto:jorgeforwork88@gmail.com) | Direct engineering and collaboration inquiries |
@@ -225,9 +225,9 @@ Vite inspects `public/media/` at startup and injects three boolean constants dec
 
 ## Invariants
 
-1. **Hero-Only Name Rule.** `[data-act="00-hero"]` is the sole visible webpage section rendering `"Jorge"` or `"Bucio"`, with each word measuring `>= 230px` wide at `1440x900`. Visible text and `alt` or `aria-label` strings across `[data-act="01-journey"]` through `[data-act="05-connect"]`, `ChapterBar`, `MenuOverlay`, and `ColophonSheet` must yield zero matches for `/jorge|bucio/i` after stripping `jorgeforwork88@gmail.com`.
+1. **Hero-Only Name Rule.** `[data-act="00-hero"]` is the sole visible webpage section rendering `"Jorge"` or `"Bucio"`, with each word measuring `>= 230px` wide at `1440x900`. Visible text and `alt` or `aria-label` strings across `[data-act="01-journey"]` through `[data-act="05-connect"]`, `ChapterBar`, `MenuOverlay`, and `ColophonSheet` must yield zero matches for `/jorge|bucio/i` after stripping literal endpoint addresses `jorgeforwork88@gmail.com` and `work.jorgebucio.com`.
 2. **README-Only GitHub Telemetry.** The Web Profile DOM renders zero GitHub contribution snakes, zero `/api/streak` cards, and zero `profile-3d-contrib` SVGs.
-3. **Read-Only Page.** The Web Profile renders zero `<form>`, `<input>`, `<textarea>`, pricing tables, or individual project case-study cards; shipped applications live at `https://zynztehr.github.io/ZynzTehr-Portfolio/`.
+3. **Read-Only Page.** The Web Profile renders zero `<form>`, `<input>`, `<textarea>`, pricing tables, or individual project case-study cards; shipped applications live at `https://work.jorgebucio.com/`.
 4. **Desktop Typography and Mobile Geometry Floors.** All visible desktop typography computes to `>= 14px`, mobile `390x844` maintains `document.documentElement.scrollWidth === 390` across all scroll stops, and `MonarchReliefCanvas` halts `requestAnimationFrame` whenever `[data-act="00-hero"]` leaves the viewport, `progressRef` reaches `0.25` at pinned stage progress `0.0325`, or `prefers-reduced-motion: reduce` is active.
 
 ---

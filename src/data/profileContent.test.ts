@@ -110,7 +110,9 @@ describe("profileContent invariants", () => {
     expect(readme).toContain("https://komarev.com/ghpvc/?username=ZynzTehr&label=PROFILE+VIEWS&color=0A66C2&style=for-the-badge");
     expect(readme).toContain("Fair Chance Futures' PAISE Program");
     expect(readme).toContain("### Forward vision");
-    expect(JOURNEY_CONTENT.milestones[1].label).toContain("Fair Chance Futures' PAISE Program");
+    expect(JOURNEY_CONTENT.milestones[1].label).toBe(
+      "The Last Mile, Fair Chance Futures & Next Chapter",
+    );
     expect(JOURNEY_CONTENT.paragraphs[1]).toContain("Fair Chance Futures' PAISE Program");
     expect(readme).toContain("/api/streak?user=ZynzTehr");
     expect(readme).toContain("github-contribution-grid-snake");

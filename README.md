@@ -24,7 +24,7 @@
 
 I build real-world software across the full stack and keep sharpening my craft every week under the GitHub handle **ZynzTehr**. Turning an idea into working code across browser interfaces, backend services, database transactions, and deployment checks is the part of engineering I enjoy most.
 
-From `2012` through `2023`, I ran Southern California Class 8 freight, dispatch, and preventive fleet maintenance operations where tight schedules, DOT inspection gates, and clear handoffs kept equipment moving safely. I started programming in `2024` and trained through *The Last Mile* full-stack web engineering program, *Next Chapter* applied AI training, and *Fair Chance Futures' PAISE Program*. Along the way, I have shipped modern Web2 applications alongside decentralized Web3 builds on the Internet Computer using `Motoko`. My 2026 focus is solving hard operational problems across Web2, applied AI, and Web3 with explicit domain schemas, choreography that respects frame budgets, and end-to-end automated verification.
+From `2012` through `2023`, I ran Southern California Class 8 freight, dispatch, and preventive fleet maintenance operations where tight schedules, DOT inspection gates, and clear handoffs kept equipment moving safely. I started programming in `2024` and trained through *The Last Mile* full-stack web engineering program, *Fair Chance Futures' PAISE Program*, and *Next Chapter* applied AI training. Along the way, I have shipped modern Web2 applications alongside decentralized Web3 builds on the Internet Computer using `Motoko`. My 2026 focus is solving hard operational problems across Web2, applied AI, and Web3 with explicit domain schemas, choreography that respects frame budgets, and end-to-end automated verification.
 
 ### Forward vision
 

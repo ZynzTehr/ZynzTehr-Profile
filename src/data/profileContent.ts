@@ -208,12 +208,12 @@ export const JOURNEY_CONTENT: JourneyContent = {
     { period: "2012 to 2023", label: "Southern California Class 8 Freight & Fleet Operations" },
     {
       period: "2024 to Present",
-      label: "The Last Mile, Next Chapter & Fair Chance Futures' PAISE Program",
+      label: "The Last Mile, Fair Chance Futures & Next Chapter",
     },
   ],
   paragraphs: [
     "From 2012 to 2023 across Southern California Class 8 freight yards, dispatch desks, and preventive fleet maintenance bays, every day came down to clear handoffs, calm triage under pressure, and systems that held together at five in the morning.",
-    "Since 2024, trained through The Last Mile, Next Chapter, and Fair Chance Futures' PAISE Program, that operational discipline shapes how every interface, typed service boundary, and forward-looking AI workflow gets built to stay readable under stress and verified end to end.",
+    "Since 2024, trained through The Last Mile, Fair Chance Futures' PAISE Program, and Next Chapter's applied AI, that operational discipline shapes how every interface, typed service boundary, and forward-looking AI workflow gets built to stay readable under stress and verified end to end.",
   ],
   handNote: "2012-2023 operations · 2024-present engineering",
 };

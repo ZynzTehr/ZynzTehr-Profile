@@ -1,5 +1,26 @@
+const OWNER = "ZynzTehr";
+const UPSTREAM_TIMEOUT_MS = 5000;
+const SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+
+export function isAllowedStreakUser(value) {
+    return value === undefined || (typeof value === "string" && value.toLowerCase() === OWNER.toLowerCase());
+}
+
+function setSvgSecurityHeaders(res) {
+    res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+    res.setHeader("Content-Security-Policy", SVG_CSP);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+}
+
 export default async function handler(req, res) {
-    const { user = "ZynzTehr", theme = "github-dark-blue", hide_border = "true" } = req.query;
+    const query = req?.query ?? {};
+    const { user, hide_border = "true" } = query;
+
+    if (!isAllowedStreakUser(user)) {
+        setSvgSecurityHeaders(res);
+        res.setHeader("Cache-Control", "no-store");
+        return res.status(400).send(renderRestrictedSvg());
+    }
 
     const token = process.env.PAT_1 || process.env.GITHUB_TOKEN || process.env.TOKEN || "";
 
@@ -7,25 +28,25 @@ export default async function handler(req, res) {
         let stats;
         if (token) {
             try {
-                stats = await getStatsViaGraphQL(user, token);
+                stats = await getStatsViaGraphQL(OWNER, token);
             } catch (err) {
-                console.warn("GraphQL failed, falling back to public calendar:", err.message);
-                stats = await getStatsViaPublicCalendar(user);
+                console.warn("GraphQL failed, falling back to public calendar:", err instanceof Error ? err.message : "error");
+                stats = await getStatsViaPublicCalendar(OWNER);
             }
         } else {
-            stats = await getStatsViaPublicCalendar(user);
+            stats = await getStatsViaPublicCalendar(OWNER);
         }
 
         const svg = renderStreakSvg(stats, { hideBorder: hide_border === "true" });
 
-        res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+        setSvgSecurityHeaders(res);
         res.setHeader("Cache-Control", "public, max-age=14400, s-maxage=14400, stale-while-revalidate=86400");
         return res.status(200).send(svg);
     } catch (error) {
-        console.error("Streak calculation error:", error);
-        const fallbackSvg = renderFallbackSvg(user, error.message);
-        res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
-        res.setHeader("Cache-Control", "public, max-age=60");
+        console.error("Streak calculation error:", error instanceof Error ? error.message : "upstream error");
+        const fallbackSvg = renderFallbackSvg(OWNER);
+        setSvgSecurityHeaders(res);
+        res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
         return res.status(200).send(fallbackSvg);
     }
 }
@@ -49,8 +70,12 @@ async function getStatsViaGraphQL(username, token) {
     const userRes = await fetch("https://api.github.com/graphql", {
         method: "POST",
         headers,
-        body: JSON.stringify({ query: userQuery, variables: { login: username } })
+        body: JSON.stringify({ query: userQuery, variables: { login: username } }),
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });
+    if (!userRes.ok) {
+        throw new Error(`GraphQL user query HTTP ${userRes.status}`);
+    }
     const userData = await userRes.json();
 
     if (!userData.data || !userData.data.user) {
@@ -84,8 +109,12 @@ async function getStatsViaGraphQL(username, token) {
     const calendarRes = await fetch("https://api.github.com/graphql", {
         method: "POST",
         headers,
-        body: JSON.stringify({ query: multiYearQuery, variables: { login: username } })
+        body: JSON.stringify({ query: multiYearQuery, variables: { login: username } }),
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });
+    if (!calendarRes.ok) {
+        throw new Error(`GraphQL calendar query HTTP ${calendarRes.status}`);
+    }
     const calendarData = await calendarRes.json();
 
     if (!calendarData.data || !calendarData.data.user) {
@@ -108,6 +137,10 @@ async function getStatsViaGraphQL(username, token) {
         }
     }
 
+    if (daysMap.size === 0) {
+        throw new Error("Empty GraphQL contribution map");
+    }
+
     return calculateStreaksFromMap(daysMap, totalContributions);
 }
 
@@ -115,8 +148,12 @@ async function getStatsViaPublicCalendar(username) {
     const res = await fetch(`https://github.com/users/${username}/contributions`, {
         headers: {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)"
-        }
+        },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });
+    if (!res.ok) {
+        throw new Error(`Public calendar HTTP ${res.status}`);
+    }
     const html = await res.text();
 
     const totalMatch = html.match(/([0-9,]+)\s*contributions\s*in the last year/i);
@@ -129,6 +166,10 @@ async function getStatsViaPublicCalendar(username) {
         const date = match[1];
         const count = match[2] === "No" ? 0 : parseInt(match[2]);
         daysMap.set(date, count);
+    }
+
+    if (daysMap.size === 0) {
+        throw new Error("Empty public contribution calendar");
     }
 
     return calculateStreaksFromMap(daysMap, totalContributions);
@@ -401,10 +442,17 @@ function renderStreakSvg(stats, options = {}) {
     </svg>`;
 }
 
-function renderFallbackSvg(user, message) {
+function renderFallbackSvg(ownerLogin) {
     return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 495 195' width='495px' height='195px'>
         <rect width='495' height='195' fill='#0d1117' rx='10'/>
-        <text x='247.5' y='85' fill='#00f2fe' font-family='sans-serif' font-size='16' font-weight='bold' text-anchor='middle'>${user}'s GitHub Streak</text>
+        <text x='247.5' y='85' fill='#00f2fe' font-family='sans-serif' font-size='16' font-weight='bold' text-anchor='middle'>${ownerLogin}'s GitHub Streak</text>
         <text x='247.5' y='120' fill='#8b949e' font-family='sans-serif' font-size='13' text-anchor='middle'>Contributions Syncing...</text>
+    </svg>`;
+}
+
+function renderRestrictedSvg() {
+    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 495 195' width='495px' height='195px'>
+        <rect width='495' height='195' fill='#0d1117' rx='10'/>
+        <text x='247.5' y='103' fill='#8b949e' font-family='sans-serif' font-size='14' text-anchor='middle'>Streak badge restricted to ZynzTehr</text>
     </svg>`;
 }

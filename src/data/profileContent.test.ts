@@ -114,6 +114,8 @@ describe("profileContent invariants", () => {
       "The Last Mile, Fair Chance Futures & Next Chapter",
     );
     expect(JOURNEY_CONTENT.paragraphs[1]).toContain("Fair Chance Futures' PAISE Program");
+    expect(readme).toContain("https://jorgebucio.com/");
+    expect(readme).toContain("https://zynztehr.dev/");
     expect(readme).toContain("/api/streak?user=ZynzTehr");
     expect(readme).toContain("github-contribution-grid-snake");
     for (const themeSvg of [

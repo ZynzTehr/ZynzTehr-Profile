@@ -961,6 +961,8 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     expect(readme).toContain("https://komarev.com/ghpvc/?username=ZynzTehr&label=PROFILE+VIEWS&color=0A66C2&style=for-the-badge");
     expect(readme).toContain("Fair Chance Futures' PAISE Program");
     expect(readme).toContain("### Forward vision");
+    expect(readme).toContain("https://jorgebucio.com/");
+    expect(readme).toContain("https://zynztehr.dev/");
     expect(readme).toContain("/api/streak?user=ZynzTehr");
     expect(readme).toContain("github-contribution-grid-snake");
     for (const themeSvg of TEN_CONTRIB_SVGS) {

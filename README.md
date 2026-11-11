@@ -12,7 +12,7 @@
 
 | Channel | Destination | Purpose |
 | :--- | :--- | :--- |
-| **Live Web Profile** | [zynz-tehr-profile.vercel.app](https://zynz-tehr-profile.vercel.app/) | Six-act interactive capability folio built with React 19, TypeScript, Tailwind CSS v4, GSAP, Motion, Lenis, and Three.js GLSL shaders |
+| **Live Web Profile** | [jorgebucio.com](https://jorgebucio.com/) | Six-act interactive capability folio built with React 19, TypeScript, Tailwind CSS v4, GSAP, Motion, Lenis, and Three.js GLSL shaders, also reachable via [zynztehr.dev](https://zynztehr.dev/) |
 | **Live Portfolio** | [zynztehr.github.io/ZynzTehr-Portfolio](https://zynztehr.github.io/ZynzTehr-Portfolio/) | Dedicated 3D WebGL portfolio indexing shipped full-stack applications and interactive builds |
 | **GitHub Repositories** | [github.com/ZynzTehr](https://github.com/ZynzTehr?tab=repositories) | Public source trees, commit history, and automated test suites |
 | **LinkedIn** | [linkedin.com/in/jorge-alberto-bucio](https://www.linkedin.com/in/jorge-bucio-876738393/) | Work history and professional correspondence |
@@ -112,7 +112,7 @@ Software is moving past static CRUD screens and isolated chat boxes toward syste
 ### Contribution streak
 
 <p align="center">
-  <img src="https://zynz-tehr-profile.vercel.app/api/streak?user=ZynzTehr&v=5" alt="GitHub Contribution Streak for ZynzTehr" />
+  <img src="https://jorgebucio.com/api/streak?user=ZynzTehr&v=5" alt="GitHub Contribution Streak for ZynzTehr" />
 </p>
 
 ### Contribution grid snake
@@ -173,7 +173,7 @@ Software is moving past static CRUD screens and isolated chat boxes toward syste
 
 This repository, `ZynzTehr-Profile`, hosts two decoupled runtime deliverables from a single Git tree alongside links to the external portfolio repository `ZynzTehr-Portfolio`:
 
-1. **The Atelier Folio web profile in `index.html`, `src/`, and `public/`.** A Vite 8, React 19, and TypeScript 5.8 static single-page application deployed to Vercel at `https://zynz-tehr-profile.vercel.app/`. On viewports matching `min-width: 900px` and `min-height: 680px` with `prefers-reduced-motion: no-preference`, `HeroJourneyStage.tsx` pins one unified `540%` scroll stage via `ScrollTrigger` id `hero-journey-pin` across Act 00 `00-hero`, Act 01 `01-journey`, Act 02 `02-craft`, and Act 03 `03-stack` around a single shared `MonarchPlateFrame` that shrinks into an espresso mat, flips `-180deg` on its Y axis into a `#f7f1e6` cotton-rag card, and expands to `100vw x 100svh` in `#1f2e26` botanical olive before releasing into sticky Act 04 `04-portfolio` and slide-over Act 05 `05-connect`. Narrower viewports, shorter viewports, and `prefers-reduced-motion: reduce` sessions render vertical stacked sections with native scroll.
+1. **The Atelier Folio web profile in `index.html`, `src/`, and `public/`.** A Vite 8, React 19, and TypeScript 5.8 static single-page application deployed to Vercel at `https://jorgebucio.com/` with permanent `308` redirect alias `https://zynztehr.dev/`. On viewports matching `min-width: 900px` and `min-height: 680px` with `prefers-reduced-motion: no-preference`, `HeroJourneyStage.tsx` pins one unified `540%` scroll stage via `ScrollTrigger` id `hero-journey-pin` across Act 00 `00-hero`, Act 01 `01-journey`, Act 02 `02-craft`, and Act 03 `03-stack` around a single shared `MonarchPlateFrame` that shrinks into an espresso mat, flips `-180deg` on its Y axis into a `#f7f1e6` cotton-rag card, and expands to `100vw x 100svh` in `#1f2e26` botanical olive before releasing into sticky Act 04 `04-portfolio` and slide-over Act 05 `05-connect`. Narrower viewports, shorter viewports, and `prefers-reduced-motion: reduce` sessions render vertical stacked sections with native scroll.
 2. **GitHub README telemetry in `api/streak.js`, `profile-3d-contrib/`, and `.github/workflows/`.** Serverless and scheduled SVG generators rendered exclusively inside GitHub Markdown. `api/streak.js` serves the owner-locked Vercel streak SVG at `/api/streak?user=ZynzTehr`, while GitHub Actions update the contribution snake on the `output` branch and 3D contribution SVGs under `profile-3d-contrib/`.
 
 ---

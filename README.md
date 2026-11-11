@@ -184,15 +184,16 @@ This repository, `ZynzTehr-Profile`, hosts two decoupled runtime deliverables fr
 | :--- | :--- | :--- |
 | `index.html` | HTML entry shell preloading `/media/hero-monarch.avif`, mounting `#root`, and linking `/icon.svg`, `/favicon.ico`, and `/apple-touch-icon.png` | Yes |
 | `src/App.tsx` | Top-level React coordinator managing `activeAct`, `MenuOverlay`, `ColophonSheet`, `ScrollPlumbBar`, desktop versus stacked stage branching, and `Cmd+K` or `Ctrl+K` index toggle | Yes |
-| `src/data/profileContent.ts` | Single typed source of truth for copy, canonical URLs, `SEO_META`, 4 craft disciplines, and the 18-tool cross-column pairing graph | Yes |
+| `src/data/profileContent.ts` and `src/data/stackBuilds.json` | Single typed source of truth for copy, canonical URLs, `SEO_META`, 4 craft disciplines, the 18-tool cross-column pairing index, and synced shipped-build metadata | Yes |
 | `src/lib/scrollEngine.ts` | Registers GSAP plugins, initializes desktop fine-pointer `Lenis` with `syncTouch: false`, exposes `navigateToAnchor`, and gates ambient video playback | Yes |
 | `src/canvas/MonarchReliefCanvas.tsx` | Lazy-loaded `three` WebGL displaced relief mesh, raking caustic lighting, and floating dust `Points` capped at `dpr <= 1.5` and active only in Act 00 | Yes, code-split into `three` chunk |
 | `src/components/` | `ChapterBar`, `ScrollPlumbBar`, `MenuOverlay`, `HeroJourneyStage`, `Act02Craft`, `Act03Stack`, `Act04Portfolio`, `Act05Connect`, `ColophonSheet`, `MagneticAction`, and Vitest component suites | Yes, excluding `*.test.tsx` |
 | `src/styles/` | Tailwind CSS v4 entry `index.css`, self-hosted `@fontsource*` font imports, metric-matched fallback faces, and custom paper and linen material classes in `materials.css` | Yes |
 | `public/` | Static `Yard Switch ZT` icons `icon.svg`, `favicon.ico`, and `apple-touch-icon.png`, `hero-monarch.{avif,webp,jpg}`, `portfolio-porch.{avif,webp,jpg}`, `paper-grain.webp`, and `Veo 3.1` `.webm` and `.mp4` video assets | Copied verbatim to `dist/` |
 | `docs/asset-requests.md` | Prompt and `ffmpeg` encoding specification for Google Labs Whisk and Google Labs Flow media drops | No |
+| `scripts/sync-stack-builds.mjs` and `scripts/sync-stack-builds.d.mts` | Idempotent GitHub repository sync script inspecting package manifests, workflows, and live deployment URLs to update `src/data/stackBuilds.json` | No |
 | `api/streak.js` and `api/streak.d.ts` | Vercel Node serverless SVG endpoint locked to GitHub login `ZynzTehr` | No, deployed as Vercel Function |
-| `profile-3d-contrib/` and `.github/workflows/` | Scheduled GitHub Actions `3d-contrib.yml` and `snake.yml` plus generated 3D contribution SVGs consumed only by `README.md` | No |
+| `profile-3d-contrib/` and `.github/workflows/` | Scheduled GitHub Actions `3d-contrib.yml`, `snake.yml`, and `sync-stack-builds.yml` plus generated 3D contribution SVGs consumed only by `README.md` | No |
 | `tests/e2e/profile.spec.ts` | Playwright and `@axe-core/playwright` end-to-end geometry, motion, accessibility, and `README.md` contract suite | No |
 
 ---
@@ -227,7 +228,7 @@ Vite inspects `public/media/` at startup and injects three boolean constants dec
 
 1. **Hero-Only Name Rule.** `[data-act="00-hero"]` is the sole visible webpage section rendering `"Jorge"` or `"Bucio"`, with each word measuring `>= 230px` wide at `1440x900`. Visible text and `alt` or `aria-label` strings across `[data-act="01-journey"]` through `[data-act="05-connect"]`, `ChapterBar`, `MenuOverlay`, and `ColophonSheet` must yield zero matches for `/jorge|bucio/i` after stripping literal endpoint addresses `jorgeforwork88@gmail.com` and `work.jorgebucio.com`.
 2. **README-Only GitHub Telemetry.** The Web Profile DOM renders zero GitHub contribution snakes, zero `/api/streak` cards, and zero `profile-3d-contrib` SVGs.
-3. **Read-Only Page.** The Web Profile renders zero `<form>`, `<input>`, `<textarea>`, pricing tables, or individual project case-study cards; shipped applications live at `https://work.jorgebucio.com/`.
+3. **Read-Only Page.** The Web Profile renders zero `<form>`, `<input>`, `<textarea>`, pricing tables, or full project case-study galleries; Act 03 surfaces compact related-build proof links on tool selection while full interactive showcases live at `https://work.jorgebucio.com/`.
 4. **Desktop Typography and Mobile Geometry Floors.** All visible desktop typography computes to `>= 14px`, mobile `390x844` maintains `document.documentElement.scrollWidth === 390` across all scroll stops, and `MonarchReliefCanvas` halts `requestAnimationFrame` whenever `[data-act="00-hero"]` leaves the viewport, `progressRef` reaches `0.25` at pinned stage progress `0.0325`, or `prefers-reduced-motion: reduce` is active.
 
 ---
@@ -236,7 +237,7 @@ Vite inspects `public/media/` at startup and injects three boolean constants dec
 
 * **Browser runtime.** The Web Profile makes zero runtime network calls to external APIs, analytics beacons, font CDNs, or databases. Clipboard access via `navigator.clipboard.writeText` runs only on explicit user click of the Copy Email button in `Act05Connect.tsx` and falls back to `window.getSelection` range selection if denied.
 * **Serverless runtime in `api/streak.js`.** Reads optional Vercel environment variable `PAT_1`, `GITHUB_TOKEN`, or `TOKEN` and issues `POST https://api.github.com/graphql` or public fallback `GET https://github.com/users/ZynzTehr/contributions` with a `5000ms` abort timeout.
-* **Scheduled GitHub Actions and Vercel build filter.** `.github/workflows/3d-contrib.yml` runs on cron `0 0 * * *` to write updated SVGs to `profile-3d-contrib/` on `main`, and `.github/workflows/snake.yml` runs on cron `0 */12 * * *` to push snake SVGs to branch `output`. `vercel.json` configures `ignoreCommand` with `git diff --quiet "${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}" HEAD -- . ':!profile-3d-contrib' ':!README.md' ':!.github'` so commits touching only README telemetry paths skip unnecessary Vercel frontend builds while preserving immutable caching `max-age=31536000, immutable` on `/assets/*`.
+* **Scheduled GitHub Actions and Vercel build filter.** `.github/workflows/sync-stack-builds.yml` runs weekly on cron `15 0 * * 0` and on manual `workflow_dispatch` to execute `npm run sync:builds`, validate diffs with `npm run check`, `npm test`, and `npm run build`, and commit `src/data/stackBuilds.json` to `main` only when shipped repository metadata changed. `.github/workflows/3d-contrib.yml` runs on cron `0 0 * * *` to write updated SVGs to `profile-3d-contrib/` on `main`, and `.github/workflows/snake.yml` runs on cron `0 */12 * * *` to push snake SVGs to branch `output`. `vercel.json` configures `ignoreCommand` with `git diff --quiet "${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}" HEAD -- . ':!profile-3d-contrib' ':!README.md' ':!.github'` so updates to `src/data/stackBuilds.json` trigger fresh Vercel deployments while README-only telemetry commits skip unnecessary frontend builds and `/assets/*` retains immutable caching `max-age=31536000, immutable`.
 
 ---
 
@@ -246,8 +247,9 @@ Prerequisites: Node.js `>= 22`, `npm`, and either Playwright Chromium via `npx p
 
 ```bash
 npm ci
+npm run sync:builds # Optional live GitHub repository sync into src/data/stackBuilds.json
 npm run check      # TypeScript strict typecheck across src/, api/, tests/, and config
-npm test           # Vitest unit and component suites for profileContent, api/streak, and Acts 00 to 05
+npm test           # Vitest unit and component suites for profileContent, sync script, api/streak, and Acts 00 to 05
 npm run build      # Production TypeScript and Vite bundle into dist/
 npm run test:e2e   # Playwright and @axe-core/playwright desktop, midpoint, mobile, and reduced-motion suite
 ```

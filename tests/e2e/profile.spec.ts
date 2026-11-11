@@ -679,12 +679,57 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     await maybeCapture(page, "desktop-midpoint-070-olive.png");
     expect(await findOverlappingVisibleText(page)).toEqual([]);
 
-    // Act 03 Stack settled hold 0.955
+    // Act 03 Stack settled hold 0.955 (idle studio note + interactive lower-right related builds pocket)
     await scrollToStageProgress(page, 0.955);
     await maybeCapture(page, "desktop-03-stack-rest.png");
     expect(await findOverlappingVisibleText(page)).toEqual([]);
     expect(await findFontFloorViolations(page, 14)).toEqual([]);
     await assertZeroAxeViolations(page, "Desktop Act 03 Stack hold");
+
+    const stageStackBuilds = page.locator(
+      '[data-slot="stage-stack-layer"] [data-slot="stack-related-builds"]',
+    );
+    await expect(stageStackBuilds).toContainText("Select an instrument across the four columns");
+    const idlePocketBox = await stageStackBuilds.boundingBox();
+    expect(idlePocketBox).not.toBeNull();
+    expect(idlePocketBox!.x).toBeGreaterThan(360);
+    expect(idlePocketBox!.width).toBeGreaterThan(800);
+    expect(idlePocketBox!.y + idlePocketBox!.height).toBeLessThanOrEqual(896);
+
+    const idbStageBtn = page.locator(
+      '[data-slot="stage-stack-layer"] button[data-tool-id="indexeddb"]',
+    );
+    await idbStageBtn.click();
+    await page.waitForTimeout(380);
+    await expect(stageStackBuilds).toContainText("Built with IndexedDB");
+    await expect(stageStackBuilds).toContainText("Fleet Pulse");
+    await expect(stageStackBuilds).toContainText("AniBeam");
+    expect(await findOverlappingVisibleText(page)).toEqual([]);
+    expect(await findFontFloorViolations(page, 14)).toEqual([]);
+    await assertDomWideE1Invariants(page, "Desktop Act 03 IndexedDB selected");
+
+    const vitestStageBtn = page.locator(
+      '[data-slot="stage-stack-layer"] button[data-tool-id="vitest"]',
+    );
+    await vitestStageBtn.click();
+    await page.waitForTimeout(380);
+    await maybeCapture(page, "desktop-03-stack-selected.png");
+    await expect(stageStackBuilds).toContainText("Built with Vitest");
+    await expect(stageStackBuilds).toContainText("Fleet Pulse");
+    await expect(stageStackBuilds).toContainText("JobSeance");
+    await expect(stageStackBuilds).toContainText("TorqueLine");
+    const activePocketBox = await stageStackBuilds.boundingBox();
+    expect(activePocketBox).not.toBeNull();
+    expect(activePocketBox!.x).toBeGreaterThan(360);
+    expect(activePocketBox!.y + activePocketBox!.height).toBeLessThanOrEqual(896);
+    expect(await findOverlappingVisibleText(page)).toEqual([]);
+    expect(await findFontFloorViolations(page, 14)).toEqual([]);
+    await assertDomWideE1Invariants(page, "Desktop Act 03 Vitest selected");
+    await assertZeroAxeViolations(page, "Desktop Act 03 Vitest selected");
+
+    await vitestStageBtn.click();
+    await page.waitForTimeout(200);
+    await expect(stageStackBuilds).toContainText("Select an instrument across the four columns");
 
     // Act 04 Portfolio portal + play-once / non-interrupting hover porch video + completion & hover retrigger
     const portfolioY = await page.evaluate(() => {
@@ -853,6 +898,26 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
           `Mobile text overlap at ${act.label}`,
         ).toEqual([]);
         await assertZeroAxeViolations(page, act.label);
+
+        if (act.selector === '[data-act="03-stack"]') {
+          const mobileTsBtn = page.locator('[data-act="03-stack"] button[data-tool-id="typescript"]');
+          await mobileTsBtn.scrollIntoViewIfNeeded();
+          await mobileTsBtn.tap();
+          await page.waitForTimeout(340);
+          const mobileInlineBuilds = page.locator('[data-act="03-stack"] [data-slot="stack-related-builds"]');
+          await expect(mobileInlineBuilds).toContainText("Built with TypeScript");
+          await expect(mobileInlineBuilds).toContainText("JobSeance");
+          const tsBox = await mobileTsBtn.boundingBox();
+          const inlineBox = await mobileInlineBuilds.boundingBox();
+          expect(tsBox).not.toBeNull();
+          expect(inlineBox).not.toBeNull();
+          expect(inlineBox!.y - (tsBox!.y + tsBox!.height)).toBeLessThanOrEqual(24);
+          expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+          expect(await findOverlappingVisibleText(page)).toEqual([]);
+          await assertZeroAxeViolations(page, "Mobile Act 03 TypeScript inline builds");
+          await mobileTsBtn.tap();
+          await page.waitForTimeout(200);
+        }
       }
 
       // Scroll to absolute bottom of document to verify Direct Contact Card + ColophonSheet dialog on 390x844

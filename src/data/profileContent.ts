@@ -1,3 +1,5 @@
+import stackBuildsData from "./stackBuilds.json";
+
 export const PORTFOLIO_URL = "https://work.jorgebucio.com/";
 export const GITHUB_URL = "https://github.com/ZynzTehr";
 export const GITHUB_REPOS_URL = "https://github.com/ZynzTehr?tab=repositories";
@@ -86,12 +88,27 @@ export type StackToolId =
   | "github-actions"
   | "vercel";
 
+export type StackProjectId = keyof typeof stackBuildsData.projects & string;
+
+export interface StackProject {
+  id: StackProjectId;
+  title: string;
+  href: string;
+  sourceHref: string;
+}
+
+export interface StackToolBuild {
+  projectId: StackProjectId;
+  usage: string;
+}
+
 export interface StackTool {
   id: StackToolId;
   label: string;
   columnId: StackColumnId;
   pairedIds: readonly StackToolId[];
   craftNote: string;
+  relatedBuilds: readonly StackToolBuild[];
 }
 
 export interface StackColumn {
@@ -108,6 +125,9 @@ export interface StackSectionContent {
   lead: string;
   handNote: string;
   resetLabel: string;
+  relatedEyebrow: string;
+  relatedIdleStatus: string;
+  relatedIdleNote: string;
 }
 
 export interface PortfolioPortalContent {
@@ -294,7 +314,36 @@ export const STACK_CONTENT: StackSectionContent = {
   lead: "Eighteen production instruments across four columns. Select any tool to illuminate the companions it pairs with in real builds.",
   handNote: "Select any tool to trace how it pairs in production",
   resetLabel: "Show full repertoire",
+  relatedEyebrow: "Field Index · Shipped Builds",
+  relatedIdleStatus: "Select any instrument",
+  relatedIdleNote:
+    "Select an instrument across the four columns to surface the live deployments and source repositories where it runs.",
 };
+
+function isStackProjectId(value: string): value is StackProjectId {
+  return Object.prototype.hasOwnProperty.call(stackBuildsData.projects, value);
+}
+
+function getToolBuilds(toolId: StackToolId): readonly StackToolBuild[] {
+  return stackBuildsData.toolBuilds[toolId].flatMap((entry) =>
+    isStackProjectId(entry.projectId)
+      ? [{ projectId: entry.projectId, usage: entry.usage }]
+      : [],
+  );
+}
+
+export const STACK_PROJECTS: Readonly<Record<StackProjectId, StackProject>> =
+  Object.fromEntries(
+    Object.entries(stackBuildsData.projects).map(([key, project]) => [
+      key,
+      {
+        id: key as StackProjectId,
+        title: project.title,
+        href: project.href,
+        sourceHref: project.sourceHref,
+      },
+    ]),
+  ) as Readonly<Record<StackProjectId, StackProject>>;
 
 export const STACK_COLUMNS: readonly StackColumn[] = [
   {
@@ -308,6 +357,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["react-19", "hono", "prisma", "vitest"],
         craftNote: "End-to-end domain contracts shared across UI state, API handlers, database queries, and tests.",
+        relatedBuilds: getToolBuilds("typescript"),
       },
       {
         id: "react-19",
@@ -315,6 +365,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["typescript", "nextjs", "motion", "vitest"],
         craftNote: "Component architecture driving interactive specimens, accessible dialogs, and deterministic state.",
+        relatedBuilds: getToolBuilds("react-19"),
       },
       {
         id: "nextjs",
@@ -322,6 +373,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["react-19", "postgresql", "prisma", "vercel"],
         craftNote: "Full-stack React application routing paired with PostgreSQL persistence and Vercel edge delivery.",
+        relatedBuilds: getToolBuilds("nextjs"),
       },
       {
         id: "tailwind-css",
@@ -329,6 +381,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["react-19", "gsap", "motion"],
         craftNote: "Design-token utility composition layered cleanly over custom editorial typography and material CSS.",
+        relatedBuilds: getToolBuilds("tailwind-css"),
       },
       {
         id: "threejs",
@@ -336,6 +389,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["gsap", "react-19", "typescript"],
         craftNote: "3D displaced relief geometry, raking caustic sunlight shaders, and atmospheric particle fields.",
+        relatedBuilds: getToolBuilds("threejs"),
       },
       {
         id: "gsap",
@@ -343,6 +397,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["threejs", "motion", "playwright"],
         craftNote: "Scroll-scrubbed pinned transitions, SplitText editorial reveals, and SVG drafting strokes.",
+        relatedBuilds: getToolBuilds("gsap"),
       },
       {
         id: "motion",
@@ -350,6 +405,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "frontend",
         pairedIds: ["react-19", "gsap", "tailwind-css"],
         craftNote: "Interruptible spring physics for tactile discipline tabs, pairing lenses, and modal sheets.",
+        relatedBuilds: getToolBuilds("motion"),
       },
     ],
   },
@@ -364,6 +420,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "backend",
         pairedIds: ["typescript", "hono", "postgresql", "github-actions"],
         craftNote: "Server runtime powering API services, AI orchestration pipelines, and automated build tooling.",
+        relatedBuilds: getToolBuilds("nodejs"),
       },
       {
         id: "hono",
@@ -371,6 +428,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "backend",
         pairedIds: ["typescript", "nodejs", "postgresql", "vitest"],
         craftNote: "Lightweight, Web-Standards HTTP routing with strict TypeScript request and response inference.",
+        relatedBuilds: getToolBuilds("hono"),
       },
       {
         id: "postgresql",
@@ -378,6 +436,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "backend",
         pairedIds: ["prisma", "nextjs", "hono", "nodejs"],
         craftNote: "Primary relational store for fleet records, audit trails, and transactional application data.",
+        relatedBuilds: getToolBuilds("postgresql"),
       },
       {
         id: "prisma",
@@ -385,6 +444,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "backend",
         pairedIds: ["postgresql", "typescript", "nextjs"],
         craftNote: "Declarative schema migrations and type-safe relational queries against PostgreSQL.",
+        relatedBuilds: getToolBuilds("prisma"),
       },
     ],
   },
@@ -399,6 +459,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "data-ai",
         pairedIds: ["typescript", "react-19", "playwright"],
         craftNote: "Local-first browser persistence for resilient offline workspaces and instant client state.",
+        relatedBuilds: getToolBuilds("indexeddb"),
       },
       {
         id: "claude-api",
@@ -406,6 +467,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "data-ai",
         pairedIds: ["typescript", "nodejs", "hono", "vitest"],
         craftNote: "Structured reasoning, tool execution, and long-context document synthesis with strict guards.",
+        relatedBuilds: getToolBuilds("claude-api"),
       },
       {
         id: "gemini-vision",
@@ -413,6 +475,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "data-ai",
         pairedIds: ["typescript", "nodejs", "postgresql", "vitest"],
         craftNote: "Multimodal visual inspection and high-accuracy OCR extraction from operational documents.",
+        relatedBuilds: getToolBuilds("gemini-vision"),
       },
     ],
   },
@@ -427,6 +490,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "verification",
         pairedIds: ["typescript", "react-19", "hono", "claude-api"],
         craftNote: "Fast unit and component contract verification across domain logic, UI interactions, and APIs.",
+        relatedBuilds: getToolBuilds("vitest"),
       },
       {
         id: "playwright",
@@ -434,6 +498,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "verification",
         pairedIds: ["gsap", "indexeddb", "github-actions", "vercel"],
         craftNote: "Real Chromium end-to-end, scroll-midpoint geometry, mobile viewport, and accessibility proof.",
+        relatedBuilds: getToolBuilds("playwright"),
       },
       {
         id: "github-actions",
@@ -441,6 +506,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "verification",
         pairedIds: ["vitest", "playwright", "vercel", "nodejs"],
         craftNote: "Automated CI gates and scheduled SVG pipelines keeping repository artifacts verified.",
+        relatedBuilds: getToolBuilds("github-actions"),
       },
       {
         id: "vercel",
@@ -448,6 +514,7 @@ export const STACK_COLUMNS: readonly StackColumn[] = [
         columnId: "verification",
         pairedIds: ["nextjs", "playwright", "github-actions"],
         craftNote: "Immutable edge asset caching, preview environments, and hardened serverless endpoints.",
+        relatedBuilds: getToolBuilds("vercel"),
       },
     ],
   },

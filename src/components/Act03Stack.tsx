@@ -4,6 +4,7 @@ import {
   ALL_STACK_TOOLS,
   STACK_COLUMNS,
   STACK_CONTENT,
+  STACK_PROJECTS,
   type StackTool,
   type StackToolId,
 } from "../data/profileContent";
@@ -22,12 +23,34 @@ export interface Act03StackProps {
   embeddedInStage?: boolean;
 }
 
+function readCompactStackViewport(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+  return window.matchMedia("(max-width: 1023px)").matches;
+}
+
 export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
   const [selectedToolId, setSelectedToolId] = useState<StackToolId | null>(null);
   const [splines, setSplines] = useState<PairingSpline[]>([]);
+  const [compactStack, setCompactStack] = useState<boolean>(() =>
+    embeddedInStage ? false : readCompactStackViewport(),
+  );
   const sectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const buttonRefs = useRef<Partial<Record<StackToolId, HTMLButtonElement | null>>>({});
+
+  useEffect(() => {
+    if (embeddedInStage || typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      setCompactStack(false);
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const sync = () => setCompactStack(mq.matches);
+    sync();
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
+  }, [embeddedInStage]);
 
   // Row-major (left-to-right, top-to-bottom line-by-line) sequence indices across all components
   const seqInfo = useMemo(() => {
@@ -46,7 +69,8 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
         }
       }
     }
-    return { headerLeft, headerRight, ledger, colHeadings, toolSeq };
+    const relatedBuilds = seq++;
+    return { headerLeft, headerRight, ledger, colHeadings, toolSeq, relatedBuilds };
   }, []);
 
   const toolMap = useMemo(() => {
@@ -195,6 +219,129 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
     };
   }, [embeddedInStage]);
 
+  const inlineMobileBuilds = !embeddedInStage && compactStack;
+
+  const renderSelectedBuilds = (tool: StackTool) => {
+    const isSingle = tool.relatedBuilds.length === 1;
+    const linkClassPrimary =
+      "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[var(--accent-sage)] underline decoration-[#cde0c0]/40 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
+    const linkClassSecondary =
+      "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[#cfd9d2] underline decoration-[#cfd9d2]/35 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
+
+    return (
+      <motion.div
+        key={tool.id}
+        initial={reduced ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduced ? { duration: 0 } : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div
+          className={`flex flex-wrap items-baseline justify-between gap-2 border-b border-[#eae4d7]/16 ${
+            embeddedInStage ? "pb-1.5" : "pb-2"
+          }`}
+        >
+          <span className="font-utility text-[14px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-sage)]">
+            Built with {tool.label}
+          </span>
+          <span className="font-utility text-[14px] text-[#cfd9d2]">
+            {isSingle ? "1 Shipped Build" : `${tool.relatedBuilds.length} Shipped Builds`}
+          </span>
+        </div>
+
+        <ul
+          className={`${embeddedInStage ? "mt-2 gap-2.5" : "mt-2.5 gap-3"} grid grid-cols-1 ${
+            tool.relatedBuilds.length === 2
+              ? "md:grid-cols-2 lg:gap-3.5"
+              : tool.relatedBuilds.length >= 3
+                ? "md:grid-cols-3 lg:gap-3.5"
+                : ""
+          }`}
+        >
+          {tool.relatedBuilds.map((build) => {
+            const project = STACK_PROJECTS[build.projectId];
+            if (!project) return null;
+
+            return (
+              <li
+                key={build.projectId}
+                data-project-id={build.projectId}
+                className={`border border-[#eae4d7]/12 bg-[#203028]/70 transition-colors duration-300 hover:border-[#cde0c0]/40 ${
+                  embeddedInStage ? "px-3 py-1.5" : "px-4 py-3"
+                } ${isSingle ? "md:flex md:items-center md:justify-between md:gap-6" : ""}`}
+              >
+                <div className={isSingle ? "space-y-0.5" : ""}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span
+                      className={`font-editorial-serif font-medium text-[var(--ink-cream)] ${
+                        embeddedInStage ? "text-[16.5px]" : "text-[18px]"
+                      }`}
+                    >
+                      {project.title}
+                    </span>
+
+                    {!isSingle ? (
+                      <span className="flex items-center gap-3">
+                        <a
+                          href={project.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${project.title} live deployment`}
+                          className={linkClassPrimary}
+                        >
+                          Live ↗
+                        </a>
+                        <a
+                          href={project.sourceHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${project.title} source repository`}
+                          className={linkClassSecondary}
+                        >
+                          Source ↗
+                        </a>
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p
+                    className={`mt-0.5 font-editorial-serif leading-[1.4] text-[var(--ink-olive-cream)] ${
+                      embeddedInStage ? "text-[14.5px]" : "text-[15.5px]"
+                    }`}
+                  >
+                    {build.usage}
+                  </p>
+                </div>
+
+                {isSingle ? (
+                  <div className="mt-2 flex shrink-0 items-center gap-4 md:mt-0">
+                    <a
+                      href={project.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${project.title} live deployment`}
+                      className={linkClassPrimary}
+                    >
+                      Live ↗
+                    </a>
+                    <a
+                      href={project.sourceHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${project.title} source repository`}
+                      className={linkClassSecondary}
+                    >
+                      Source ↗
+                    </a>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </motion.div>
+    );
+  };
+
   return (
     <section
       ref={sectionRef}
@@ -327,12 +474,12 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
           )}
         </div>
 
-        {/* Four-column tactile olive specimen table + desktop SVG pin-head splines */}
+        {/* Four-column tactile olive specimen table + desktop SVG pin-head splines + lower-right builds pocket */}
         <LayoutGroup id={embeddedInStage ? "stack-repertoire-grid-stage" : "stack-repertoire-grid"}>
           <div
             ref={gridRef}
-            className={`relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${
-              embeddedInStage ? "mt-4 gap-5" : "mt-10 gap-8 lg:gap-7"
+            className={`relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-[auto_1fr] ${
+              embeddedInStage ? "mt-4 gap-5 lg:gap-y-3.5" : "mt-10 gap-8 lg:gap-x-7 lg:gap-y-5"
             }`}
           >
             {splines.length > 0 ? (
@@ -363,106 +510,164 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
               </svg>
             ) : null}
 
-            {STACK_COLUMNS.map((column, colIdx) => (
-              <div
-                key={column.id}
-                className={`relative z-20 ${embeddedInStage ? "space-y-2.5" : "space-y-4"}`}
-              >
+            {STACK_COLUMNS.map((column, colIdx) => {
+              const desktopColPlacement =
+                [
+                  "lg:col-start-1 lg:row-start-1 lg:row-span-2",
+                  "lg:col-start-2 lg:row-start-1",
+                  "lg:col-start-3 lg:row-start-1",
+                  "lg:col-start-4 lg:row-start-1",
+                ][colIdx] ?? "";
+
+              return (
                 <div
-                  data-stack-seq={seqInfo.colHeadings[colIdx]}
-                  className={`flex items-baseline justify-between border-b border-[#eae4d7]/20 ${
-                    embeddedInStage ? "pb-2" : "pb-3"
+                  key={column.id}
+                  className={`relative z-20 ${desktopColPlacement} ${
+                    embeddedInStage ? "space-y-2.5" : "space-y-4"
                   }`}
                 >
-                  <h3
-                    className={`font-editorial-serif font-medium text-[var(--ink-cream)] ${
-                      embeddedInStage ? "text-[18px]" : "text-[20px]"
+                  <div
+                    data-stack-seq={seqInfo.colHeadings[colIdx]}
+                    className={`flex items-baseline justify-between border-b border-[#eae4d7]/20 ${
+                      embeddedInStage ? "pb-2" : "pb-3"
                     }`}
                   >
-                    {column.title}
-                  </h3>
-                  <span className="font-utility text-[14px] font-semibold tracking-[0.14em] text-[var(--accent-sage)]">
-                    {column.roman}
-                  </span>
-                </div>
+                    <h3
+                      className={`font-editorial-serif font-medium text-[var(--ink-cream)] ${
+                        embeddedInStage ? "text-[18px]" : "text-[20px]"
+                      }`}
+                    >
+                      {column.title}
+                    </h3>
+                    <span className="font-utility text-[14px] font-semibold tracking-[0.14em] text-[var(--accent-sage)]">
+                      {column.roman}
+                    </span>
+                  </div>
 
-                <ul className={embeddedInStage ? "space-y-1.5" : "space-y-2.5"}>
-                  {column.tools.map((tool) => {
-                    const isSelected = selectedToolId === tool.id;
-                    const isPaired = pairedSet.has(tool.id);
-                    const isDimmed = selectedToolId !== null && !isSelected && !isPaired;
+                  <ul className={embeddedInStage ? "space-y-1.5" : "space-y-2.5"}>
+                    {column.tools.map((tool) => {
+                      const isSelected = selectedToolId === tool.id;
+                      const isPaired = pairedSet.has(tool.id);
+                      const isDimmed = selectedToolId !== null && !isSelected && !isPaired;
 
-                    let stateClass =
-                      "border-[#eae4d7]/18 bg-[#24352c]/65 text-[var(--ink-cream)] hover:border-[#cde0c0]/55 hover:bg-[#2a3e33]";
-                    if (isSelected) {
-                      stateClass =
-                        "border-[#f7f1e6] bg-[var(--surface-rag)] text-[var(--ink-espresso)] shadow-[0_14px_30px_-14px_rgba(8,14,11,0.75)]";
-                    } else if (isPaired) {
-                      stateClass =
-                        "border-[#cde0c0]/70 bg-[#2c4236] text-[var(--ink-cream)]";
-                    } else if (isDimmed) {
-                      stateClass =
-                        "border-[#eae4d7]/10 bg-[#1a2720]/75 text-[#b7c2ba] hover:border-[#cde0c0]/35 hover:text-[var(--ink-cream)]";
-                    }
+                      let stateClass =
+                        "border-[#eae4d7]/18 bg-[#24352c]/65 text-[var(--ink-cream)] hover:border-[#cde0c0]/55 hover:bg-[#2a3e33]";
+                      if (isSelected) {
+                        stateClass =
+                          "border-[#f7f1e6] bg-[var(--surface-rag)] text-[var(--ink-espresso)] shadow-[0_14px_30px_-14px_rgba(8,14,11,0.75)]";
+                      } else if (isPaired) {
+                        stateClass =
+                          "border-[#cde0c0]/70 bg-[#2c4236] text-[var(--ink-cream)]";
+                      } else if (isDimmed) {
+                        stateClass =
+                          "border-[#eae4d7]/10 bg-[#1a2720]/75 text-[#b7c2ba] hover:border-[#cde0c0]/35 hover:text-[var(--ink-cream)]";
+                      }
 
-                    return (
-                      <li key={tool.id} data-stack-seq={seqInfo.toolSeq[tool.id]}>
-                        <button
-                          ref={(el) => {
-                            buttonRefs.current[tool.id] = el;
-                          }}
-                          type="button"
-                          data-tool-id={tool.id}
-                          aria-pressed={isSelected}
-                          onClick={() =>
-                            setSelectedToolId((prev) => (prev === tool.id ? null : tool.id))
-                          }
-                          className={`editorial-btn-sheen group relative flex w-full items-center justify-between gap-3 border text-left transition-all duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
-                            embeddedInStage ? "min-h-11 px-3.5 py-1.5" : "min-h-12 px-4 py-2.5"
-                          } ${stateClass}`}
-                        >
-                          <span
-                            className={`flex items-center gap-2.5 font-editorial-serif leading-snug transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 ${
-                              embeddedInStage ? "text-[16.5px]" : "text-[18px]"
-                            }`}
+                      return (
+                        <li key={tool.id} data-stack-seq={seqInfo.toolSeq[tool.id]}>
+                          <button
+                            ref={(el) => {
+                              buttonRefs.current[tool.id] = el;
+                            }}
+                            type="button"
+                            data-tool-id={tool.id}
+                            aria-pressed={isSelected}
+                            onClick={() =>
+                              setSelectedToolId((prev) => (prev === tool.id ? null : tool.id))
+                            }
+                            className={`editorial-btn-sheen group relative flex w-full items-center justify-between gap-3 border text-left transition-all duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
+                              embeddedInStage ? "min-h-11 px-3.5 py-1.5" : "min-h-12 px-4 py-2.5"
+                            } ${stateClass}`}
                           >
-                            {isSelected ? (
-                              <motion.span
-                                layoutId="stack-selected-pin"
-                                transition={
-                                  reduced
-                                    ? { duration: 0 }
-                                    : { type: "spring", stiffness: 290, damping: 28 }
-                                }
-                                aria-hidden="true"
-                                className="h-2 w-2 shrink-0 rounded-full bg-[var(--accent-monarch)]"
-                              />
-                            ) : null}
-                            <span>{tool.label}</span>
-                          </span>
+                            <span
+                              className={`flex items-center gap-2.5 font-editorial-serif leading-snug transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 ${
+                                embeddedInStage ? "text-[16.5px]" : "text-[18px]"
+                              }`}
+                            >
+                              {isSelected ? (
+                                <motion.span
+                                  layoutId="stack-selected-pin"
+                                  transition={
+                                    reduced
+                                      ? { duration: 0 }
+                                      : { type: "spring", stiffness: 290, damping: 28 }
+                                  }
+                                  aria-hidden="true"
+                                  className="h-2 w-2 shrink-0 rounded-full bg-[var(--accent-monarch)]"
+                                />
+                              ) : null}
+                              <span>{tool.label}</span>
+                            </span>
 
-                          {isSelected ? (
-                            <span
-                              aria-hidden="true"
-                              className="font-utility text-[14px] font-semibold tracking-[0.06em] text-[var(--accent-monarch-deep)]"
+                            {isSelected ? (
+                              <span
+                                aria-hidden="true"
+                                className="font-utility text-[14px] font-semibold tracking-[0.06em] text-[var(--accent-monarch-deep)]"
+                              >
+                                Selected
+                              </span>
+                            ) : isPaired ? (
+                              <span
+                                aria-hidden="true"
+                                className="font-utility text-[14px] font-medium tracking-[0.06em] text-[var(--accent-sage)]"
+                              >
+                                Paired
+                              </span>
+                            ) : null}
+                          </button>
+
+                          {inlineMobileBuilds && isSelected ? (
+                            <div
+                              data-slot="stack-related-builds"
+                              aria-live="polite"
+                              className="mt-2 border border-[#cde0c0]/35 bg-[#18241d] px-4 py-3.5"
                             >
-                              Selected
-                            </span>
-                          ) : isPaired ? (
-                            <span
-                              aria-hidden="true"
-                              className="font-utility text-[14px] font-medium tracking-[0.06em] text-[var(--accent-sage)]"
-                            >
-                              Paired
-                            </span>
+                              {renderSelectedBuilds(tool)}
+                            </div>
                           ) : null}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+
+            {/* Lower center-right shipped builds pocket under Columns II through IV */}
+            <div
+              data-slot={
+                inlineMobileBuilds && selectedTool
+                  ? "stack-related-builds-placeholder"
+                  : "stack-related-builds"
+              }
+              data-stack-seq={seqInfo.relatedBuilds}
+              aria-live="polite"
+              className={`relative z-20 border border-[#eae4d7]/16 bg-[#18241d] transition-colors duration-300 md:col-span-2 lg:col-span-3 lg:col-start-2 lg:row-start-2 lg:self-end ${
+                inlineMobileBuilds && selectedTool ? "hidden" : ""
+              } ${embeddedInStage ? "px-4 py-2.5" : "px-5 py-5 sm:px-7"}`}
+            >
+              {selectedTool && !inlineMobileBuilds ? (
+                renderSelectedBuilds(selectedTool)
+              ) : (
+                <div>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[#eae4d7]/14 pb-2">
+                    <span className="font-utility text-[14px] font-medium uppercase tracking-[0.14em] text-[var(--accent-sage)]">
+                      {STACK_CONTENT.relatedEyebrow}
+                    </span>
+                    <span className="font-utility text-[14px] tracking-[0.06em] text-[#cfd9d2]">
+                      {STACK_CONTENT.relatedIdleStatus}
+                    </span>
+                  </div>
+                  <p
+                    className={`font-editorial-serif italic leading-[1.48] text-[var(--ink-olive-cream)] ${
+                      embeddedInStage ? "mt-2 text-[16px]" : "mt-2.5 text-[17.5px]"
+                    }`}
+                  >
+                    {STACK_CONTENT.relatedIdleNote}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </LayoutGroup>
       </div>

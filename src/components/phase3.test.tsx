@@ -173,19 +173,40 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
     const prismaButton = screen.getByRole("button", { name: "Prisma" });
     expect(pgButton).toHaveAttribute("aria-pressed", "false");
 
+    const ledger = container.querySelector('[data-slot="stack-pairing-ledger"]');
+    const relatedBuilds = container.querySelector('[data-slot="stack-related-builds"]');
+    expect(relatedBuilds?.textContent).toContain("Select an instrument across the four columns");
+
     await user.click(pgButton);
     expect(pgButton).toHaveAttribute("aria-pressed", "true");
     // Accessible name stays stable ("PostgreSQL") even when visual Selected badge renders
     expect(screen.getByRole("button", { name: "PostgreSQL" })).toBe(pgButton);
     expect(prismaButton.textContent).toContain("Paired");
 
-    const ledger = container.querySelector('[data-slot="stack-pairing-ledger"]');
     expect(ledger?.textContent).toContain("Primary relational store for fleet records");
+    expect(relatedBuilds?.textContent).toContain("Built with PostgreSQL");
+    expect(relatedBuilds?.textContent).toContain("Campfire of the Damned");
+    expect(relatedBuilds?.textContent).toContain("JobSeance");
+    expect(relatedBuilds?.textContent).toContain("AniBeam");
 
-    // Clicking the selected tool again restores full repertoire
-    await user.click(pgButton);
-    expect(pgButton).toHaveAttribute("aria-pressed", "false");
+    // Switching to IndexedDB updates related builds in the lower-right pocket
+    const idbButton = screen.getByRole("button", { name: "IndexedDB" });
+    await user.click(idbButton);
+    expect(relatedBuilds?.textContent).toContain("Built with IndexedDB");
+    expect(relatedBuilds?.textContent).toContain("Fleet Pulse");
+    expect(relatedBuilds?.textContent).toContain("AniBeam");
+    expect(
+      screen.getByRole("link", { name: "Fleet Pulse live deployment" }),
+    ).toHaveAttribute("href", "https://fleet-pulse-gilt.vercel.app/");
+    expect(
+      screen.getByRole("link", { name: "Fleet Pulse source repository" }),
+    ).toHaveAttribute("rel", "noopener noreferrer");
+
+    // Clicking the selected tool again restores full repertoire and quiet studio note
+    await user.click(idbButton);
+    expect(idbButton).toHaveAttribute("aria-pressed", "false");
     expect(ledger?.textContent).toContain("All eighteen 2026 instruments");
+    expect(relatedBuilds?.textContent).toContain("Select an instrument across the four columns");
   });
 
   it("E3: omits <video> when hasHeroVideo is false, renders muted inline loop when eligible, and suppresses on reduced-motion, < 768px, or Save-Data", () => {
@@ -534,14 +555,14 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
     });
   });
 
-  it("E6: assigns data-stack-seq on Act03Stack in strict top-to-bottom, left-to-right row-major order across all 25 components", () => {
+  it("E6: assigns data-stack-seq on Act03Stack in strict top-to-bottom, left-to-right row-major order across all 26 components", () => {
     const { container } = render(<Act03Stack embeddedInStage />);
     const seqNodes = Array.from(container.querySelectorAll<HTMLElement>("[data-stack-seq]")).sort(
       (a, b) => Number(a.dataset.stackSeq) - Number(b.dataset.stackSeq),
     );
-    expect(seqNodes).toHaveLength(25);
+    expect(seqNodes).toHaveLength(26);
     expect(seqNodes.map((n) => Number(n.dataset.stackSeq))).toEqual(
-      Array.from({ length: 25 }, (_, i) => i),
+      Array.from({ length: 26 }, (_, i) => i),
     );
 
     // Seq 3..6 are column headings I, II, III, IV left-to-right
@@ -551,7 +572,7 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
 
     // Seq 7..24 are the 18 tools ordered row-by-row left-to-right across columns I..IV
     const orderedToolIds = seqNodes
-      .slice(7)
+      .slice(7, 25)
       .map((li) => li.querySelector("button")?.getAttribute("data-tool-id"));
     expect(orderedToolIds).toEqual([
       // Row 0
@@ -578,5 +599,8 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
       "gsap",
       "motion",
     ]);
+
+    // Seq 25 is the lower-right shipped builds pocket
+    expect(seqNodes[25]?.getAttribute("data-slot")).toBe("stack-related-builds");
   });
 });

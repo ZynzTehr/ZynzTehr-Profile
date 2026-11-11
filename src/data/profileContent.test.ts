@@ -2,6 +2,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  assembleStackBuilds,
+  buildAutoUsageNote,
+  detectRepoTools,
+  formatRepoTitle,
+  normalizeLiveHref,
+} from "../../scripts/sync-stack-builds.mjs";
+import stackBuildsData from "./stackBuilds.json";
+import {
   ALL_STACK_TOOLS,
   CHAPTER_ITEMS,
   COLOPHON_CONTENT,
@@ -20,6 +28,7 @@ import {
   PORTFOLIO_URL,
   STACK_COLUMNS,
   STACK_CONTENT,
+  STACK_PROJECTS,
 } from "./profileContent";
 
 const RETIRED_SKILLS = /\b(motoko|icp|jquery|bootstrap|ejs)\b/i;
@@ -58,6 +67,7 @@ describe("profileContent invariants", () => {
         CRAFT_CONTENT,
         CRAFT_DISCIPLINES,
         STACK_CONTENT,
+        STACK_PROJECTS,
         STACK_COLUMNS,
         PORTFOLIO_CONTENT,
         CONNECT_CONTENT,
@@ -81,6 +91,8 @@ describe("profileContent invariants", () => {
       HERO_CONTENT,
       JOURNEY_CONTENT,
       CRAFT_DISCIPLINES,
+      STACK_CONTENT,
+      STACK_PROJECTS,
       STACK_COLUMNS,
       PORTFOLIO_CONTENT,
       CONNECT_CONTENT,
@@ -91,7 +103,7 @@ describe("profileContent invariants", () => {
     }
   });
 
-  it("defines 18 unique 2026 stack tools with valid cross-column pairedIds", () => {
+  it("defines 18 unique 2026 stack tools with valid cross-column pairedIds and shipped builds", () => {
     expect(ALL_STACK_TOOLS).toHaveLength(18);
     const idSet = new Set(ALL_STACK_TOOLS.map((tool) => tool.id));
     expect(idSet.size).toBe(18);
@@ -99,11 +111,149 @@ describe("profileContent invariants", () => {
     for (const tool of ALL_STACK_TOOLS) {
       expect(tool.pairedIds.length).toBeGreaterThan(0);
       expect(tool.craftNote.length).toBeGreaterThan(20);
+      expect(tool.relatedBuilds.length).toBeGreaterThanOrEqual(1);
+      expect(tool.relatedBuilds.length).toBeLessThanOrEqual(3);
       for (const targetId of tool.pairedIds) {
         expect(targetId).not.toBe(tool.id);
         expect(idSet.has(targetId), `Missing paired tool id "${targetId}" on "${tool.id}"`).toBe(true);
       }
+      const rawEntries = stackBuildsData.toolBuilds[tool.id];
+      expect(tool.relatedBuilds).toHaveLength(rawEntries.length);
+
+      const seenProjects = new Set<string>();
+      for (const build of tool.relatedBuilds) {
+        expect(seenProjects.has(build.projectId)).toBe(false);
+        seenProjects.add(build.projectId);
+        const project = STACK_PROJECTS[build.projectId];
+        expect(project.title.length).toBeGreaterThan(2);
+        expect(project.href).toMatch(/^https:\/\//);
+        expect(project.sourceHref).toMatch(/^https:\/\/github\.com\/ZynzTehr\//);
+        expect(build.usage.length).toBeGreaterThan(20);
+      }
     }
+  });
+
+  it("sync-stack-builds detects real manifest tools, sanitizes new repo copy, and surfaces newly shipped builds within the 3-card cap", () => {
+    expect(normalizeLiveHref("https://freight-copilot.vercel.app")).toBe(
+      "https://freight-copilot.vercel.app/",
+    );
+    expect(normalizeLiveHref("http://insecure.example.com")).toBeNull();
+    expect(normalizeLiveHref("")).toBeNull();
+
+    expect(formatRepoTitle("freight-ai-hud")).toBe("Freight AI HUD");
+
+    const sanitizedUsage = buildAutoUsageNote(
+      "Freight Copilot is an offline yard dispatch tool built by Jorge Bucio with Bootstrap — tracks trailers across docks.",
+      "Freight Copilot",
+      "indexeddb",
+    );
+    expect(sanitizedUsage).not.toMatch(PERSONAL_NAME);
+    expect(sanitizedUsage).not.toMatch(RETIRED_SKILLS);
+    expect(sanitizedUsage.length).toBeGreaterThanOrEqual(24);
+    expect(sanitizedUsage.length).toBeLessThanOrEqual(90);
+
+    const emptyFallback = buildAutoUsageNote("", "Freight Copilot", "vitest");
+    expect(emptyFallback).toBe("Shipped Freight Copilot deployment built and verified with Vitest.");
+
+    const detected = detectRepoTools({
+      repoName: "freight-copilot",
+      liveHref: "https://freight-copilot.vercel.app/",
+      treePaths: [
+        "package.json",
+        "tsconfig.json",
+        ".env.example",
+        ".github/workflows/ci.yml",
+        "vercel.json",
+      ],
+      packageManifests: [
+        {
+          dependencies: {
+            next: "^16.4.0",
+            react: "^19.2.0",
+            "@neondatabase/serverless": "^1.0.0",
+            "@anthropic-ai/sdk": "^0.60.0",
+            idb: "^8.0.0",
+          },
+          devDependencies: {
+            typescript: "^5.8.0",
+            vitest: "^5.1.0",
+            "@playwright/test": "^1.52.0",
+          },
+        },
+      ],
+      textBlobs: ["DATABASE_URL=\nANTHROPIC_API_KEY=\n"],
+    });
+
+    expect(detected).toEqual([
+      "typescript",
+      "react-19",
+      "nextjs",
+      "postgresql",
+      "indexeddb",
+      "claude-api",
+      "vitest",
+      "playwright",
+      "github-actions",
+      "vercel",
+    ]);
+
+    const assembled = assembleStackBuilds([
+      {
+        id: "fleet-pulse",
+        repoName: "fleet-pulse",
+        title: "Fleet Pulse",
+        href: "https://fleet-pulse-gilt.vercel.app/",
+        sourceHref: "https://github.com/ZynzTehr/fleet-pulse",
+        description: "",
+        pushedAtMs: 1_000,
+        isCurated: true,
+        usageByTool: { vitest: "Verifies dual mileage-and-calendar PM math, fuel splits, and backup merges." },
+        tools: ["vitest"],
+      },
+      {
+        id: "job-seance",
+        repoName: "JobSeance",
+        title: "JobSeance",
+        href: "https://job-seance.vercel.app/",
+        sourceHref: "https://github.com/ZynzTehr/JobSeance",
+        description: "",
+        pushedAtMs: 2_000,
+        isCurated: true,
+        usageByTool: { vitest: "Unit tests rubric scoring and parser logic with zero live network calls." },
+        tools: ["vitest"],
+      },
+      {
+        id: "torque-line",
+        repoName: "torque-line",
+        title: "TorqueLine",
+        href: "https://torque-line.vercel.app/",
+        sourceHref: "https://github.com/ZynzTehr/torque-line",
+        description: "",
+        pushedAtMs: 3_000,
+        isCurated: true,
+        usageByTool: { vitest: "Fast contract suites covering diagnostic schemas and fleet state rules." },
+        tools: ["vitest"],
+      },
+      {
+        id: "freight-copilot",
+        repoName: "freight-copilot",
+        title: "Freight Copilot",
+        href: "https://freight-copilot.vercel.app/",
+        sourceHref: "https://github.com/ZynzTehr/freight-copilot",
+        description: "Real-time yard dispatch board with automated dock checks.",
+        pushedAtMs: 9_000,
+        isCurated: false,
+        usageByTool: null,
+        tools: ["vitest"],
+      },
+    ]);
+
+    expect(assembled.toolBuilds.vitest.map((entry) => entry.projectId)).toEqual([
+      "freight-copilot",
+      "fleet-pulse",
+      "job-seance",
+    ]);
+    expect(assembled.projects["freight-copilot"]?.href).toBe("https://freight-copilot.vercel.app/");
   });
 
   it("keeps README.md aligned with hero typing SVG, profile views badge, PAISE program, forward vision, discipline-grouped badges, GitHub widgets, and 6 engineering sections without emojis or dead links", () => {

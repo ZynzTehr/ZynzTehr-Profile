@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "check": "tsc --noEmit",
+    "sync:builds": "node scripts/sync-stack-builds.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

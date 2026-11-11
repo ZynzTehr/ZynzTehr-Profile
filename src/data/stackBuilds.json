@@ -1,0 +1,272 @@
+{
+  "projects": {
+    "fleet-pulse": {
+      "id": "fleet-pulse",
+      "title": "Fleet Pulse",
+      "href": "https://fleet-pulse-gilt.vercel.app/",
+      "sourceHref": "https://github.com/ZynzTehr/fleet-pulse"
+    },
+    "job-seance": {
+      "id": "job-seance",
+      "title": "JobSeance",
+      "href": "https://job-seance.vercel.app/",
+      "sourceHref": "https://github.com/ZynzTehr/JobSeance"
+    },
+    "torque-line": {
+      "id": "torque-line",
+      "title": "TorqueLine",
+      "href": "https://torque-line.vercel.app/",
+      "sourceHref": "https://github.com/ZynzTehr/torque-line"
+    },
+    "campfire": {
+      "id": "campfire",
+      "title": "Campfire of the Damned",
+      "href": "https://campfire-of-the-damned-five.vercel.app/",
+      "sourceHref": "https://github.com/ZynzTehr/campfire-of-the-damned"
+    },
+    "ani-beam": {
+      "id": "ani-beam",
+      "title": "AniBeam",
+      "href": "https://ani-beam.vercel.app/",
+      "sourceHref": "https://github.com/ZynzTehr/aniBeam"
+    },
+    "new-age-chess": {
+      "id": "new-age-chess",
+      "title": "New Age Chess",
+      "href": "https://zynztehr.github.io/new-age-chess/",
+      "sourceHref": "https://github.com/ZynzTehr/new-age-chess"
+    },
+    "webgl-portfolio": {
+      "id": "webgl-portfolio",
+      "title": "3D WebGL Portfolio",
+      "href": "https://work.jorgebucio.com/",
+      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Portfolio"
+    },
+    "atelier-folio": {
+      "id": "atelier-folio",
+      "title": "Atelier Folio",
+      "href": "https://jorgebucio.com/",
+      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Profile"
+    },
+    "vscode-fx": {
+      "id": "vscode-fx",
+      "title": "VSCode FX",
+      "href": "https://marketplace.visualstudio.com/items?itemName=VSCodeFX.vscode-fx",
+      "sourceHref": "https://github.com/ZynzTehr/vscode-fx"
+    }
+  },
+  "toolBuilds": {
+    "typescript": [
+      {
+        "projectId": "job-seance",
+        "usage": "Typed ghost-job scoring rubrics, Prisma models, and Next.js route contracts."
+      },
+      {
+        "projectId": "torque-line",
+        "usage": "Shared fleet diagnostic schemas validated across server actions and Zod."
+      },
+      {
+        "projectId": "vscode-fx",
+        "usage": "Typed VS Code extension runtime coordinating ten pure-CSS editor effects."
+      }
+    ],
+    "react-19": [
+      {
+        "projectId": "ani-beam",
+        "usage": "Manga panel discovery, mood-slider gacha pulls, and persistent title cards."
+      },
+      {
+        "projectId": "new-age-chess",
+        "usage": "Real-time threat radar overlays, square-control heatmaps, and AI coaching."
+      },
+      {
+        "projectId": "campfire",
+        "usage": "Atmospheric story interface paired with a reactive pure-CSS campfire."
+      }
+    ],
+    "nextjs": [
+      {
+        "projectId": "job-seance",
+        "usage": "App Router verification flows, OAuth sign-in, and employer board checks."
+      },
+      {
+        "projectId": "torque-line",
+        "usage": "Server actions and multi-page fleet workflows for diagnostics, fuel, and records."
+      }
+    ],
+    "tailwind-css": [
+      {
+        "projectId": "ani-beam",
+        "usage": "Dynamic artwork-sampled color themes and responsive manga panel grids."
+      },
+      {
+        "projectId": "job-seance",
+        "usage": "Evidence scorecards and scam-risk breakdowns built on Tailwind CSS v4."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Stone, limewash, and olive linen material tokens paired with editorial type."
+      }
+    ],
+    "threejs": [
+      {
+        "projectId": "webgl-portfolio",
+        "usage": "Interactive 3D Earth showcase with custom SVG artwork and orbital camera."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Orthographic GLSL sunlight caustics and relief shading over the Monarch plate."
+      },
+      {
+        "projectId": "new-age-chess",
+        "usage": "3D spatial arena paired with tactical square-control overlays and ELO bots."
+      }
+    ],
+    "gsap": [
+      {
+        "projectId": "atelier-folio",
+        "usage": "Pinned multi-act card flips, SplitText reveals, and SVG compass strokes."
+      },
+      {
+        "projectId": "webgl-portfolio",
+        "usage": "Velocity-reactive project carousel motion and HUD choreography."
+      }
+    ],
+    "motion": [
+      {
+        "projectId": "torque-line",
+        "usage": "Fluid layout transitions across fleet diagnostic views, drawers, and tables."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Interruptible spring physics for discipline tabs, pairing pins, and modal sheets."
+      }
+    ],
+    "nodejs": [
+      {
+        "projectId": "ani-beam",
+        "usage": "Node 24 Fastify chat backend with isolated Postgres test runners."
+      },
+      {
+        "projectId": "campfire",
+        "usage": "API service locking system prompts and pre-call database budget gates."
+      },
+      {
+        "projectId": "webgl-portfolio",
+        "usage": "Automated GitHub API sync script generating typed project metadata."
+      }
+    ],
+    "hono": [
+      {
+        "projectId": "campfire",
+        "usage": "Typed /api service wrapping story generation in three safety guardrails."
+      }
+    ],
+    "postgresql": [
+      {
+        "projectId": "campfire",
+        "usage": "Neon Postgres advisory locks and atomic row reservations capping AI spend."
+      },
+      {
+        "projectId": "job-seance",
+        "usage": "Pooled and direct Neon branches storing verified employer board checks."
+      },
+      {
+        "projectId": "ani-beam",
+        "usage": "Postgres 18 chat persistence verified against per-test throwaway databases."
+      }
+    ],
+    "prisma": [
+      {
+        "projectId": "job-seance",
+        "usage": "Prisma 7 schema migrations and typed queries for applications and scam reports."
+      }
+    ],
+    "indexeddb": [
+      {
+        "projectId": "fleet-pulse",
+        "usage": "100% offline client store for tractors, trailers, fuel logs, and PM triggers."
+      },
+      {
+        "projectId": "ani-beam",
+        "usage": "Async browser persistence remembering saved watchlists across sessions."
+      }
+    ],
+    "claude-api": [
+      {
+        "projectId": "job-seance",
+        "usage": "Extracts employer and role data from postings under daily USD spend caps."
+      },
+      {
+        "projectId": "torque-line",
+        "usage": "Structured heavy-duty equipment fault triage and maintenance diagnostics."
+      }
+    ],
+    "gemini-vision": [
+      {
+        "projectId": "fleet-pulse",
+        "usage": "Extracts mileage, diesel, DEF, and shop totals from photographed receipts."
+      },
+      {
+        "projectId": "campfire",
+        "usage": "Hardened Gemini REST adapter guarded by input, output, and cost gates."
+      }
+    ],
+    "vitest": [
+      {
+        "projectId": "fleet-pulse",
+        "usage": "Verifies dual mileage-and-calendar PM math, fuel splits, and backup merges."
+      },
+      {
+        "projectId": "job-seance",
+        "usage": "Unit tests rubric scoring and parser logic with zero live network calls."
+      },
+      {
+        "projectId": "torque-line",
+        "usage": "Fast contract suites covering diagnostic schemas and fleet state rules."
+      }
+    ],
+    "playwright": [
+      {
+        "projectId": "job-seance",
+        "usage": "End-to-end browser verification of posting checks and authenticated flows."
+      },
+      {
+        "projectId": "torque-line",
+        "usage": "Chromium E2E coverage across equipment records, diagnostics, and fuel logs."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Scroll-midpoint geometry, 390px mobile layout, and zero-Axe violation gates."
+      }
+    ],
+    "github-actions": [
+      {
+        "projectId": "webgl-portfolio",
+        "usage": "Weekly scheduled repository sync and custom-domain Pages deployment."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Scheduled repository sync, 3D contribution SVGs, and verification gates."
+      },
+      {
+        "projectId": "job-seance",
+        "usage": "Continuous typecheck, Vitest, and Playwright verification on pull requests."
+      }
+    ],
+    "vercel": [
+      {
+        "projectId": "campfire",
+        "usage": "Edge rewrites routing frontend assets and /api Hono functions in one project."
+      },
+      {
+        "projectId": "job-seance",
+        "usage": "Preview and production deployments backed by branched Neon databases."
+      },
+      {
+        "projectId": "atelier-folio",
+        "usage": "Custom apex domain, 308 edge redirects, and CSP-hardened SVG functions."
+      }
+    ]
+  }
+}

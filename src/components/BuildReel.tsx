@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate, AnimatePresence, usePresence } from "motion/react";
 import type { StackReel } from "../data/profileContent";
+import { markMutedInline } from "../lib/scrollEngine";
 import { formatCountdown, REEL_GEOMETRY, reelLayout } from "./reel/reelLayout";
 import type { ReelScene } from "./reel/ReelScene";
 
@@ -190,8 +191,8 @@ function ReelStage({ projectId, reel, title, placement, reduced }: ReelStageProp
         <video
           ref={(el) => {
             videoRef.current = el;
-            // React does not always reflect `muted` as an attribute; set the property before autoplay.
-            if (el) el.muted = true;
+            // React only sets the `muted` property; iOS autoplay also needs the attribute
+            markMutedInline(el);
           }}
           data-slot="build-reel-video"
           className="build-reel__video"

@@ -421,6 +421,14 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
       await Promise.resolve();
       expect(blockedIntro.style.opacity).toBe("0");
       expect(onBlockedStartSpy).toHaveBeenCalledTimes(1);
+      // iOS autoplay also checks the attribute, which React never renders for `muted`
+      expect(blockedIntro.hasAttribute("muted")).toBe(true);
+      expect(blockedIntro.hasAttribute("playsinline")).toBe(true);
+      // The first tap (a user gesture) flies the butterfly that autoplay refused
+      const playsBeforeTap = playSpy.mock.calls.length;
+      fireEvent.touchEnd(window);
+      expect(playSpy.mock.calls.length).toBe(playsBeforeTap + 1);
+      expect(blockedIntro.style.opacity).toBe("1");
       uBlocked();
 
       // Desktop reload at scrollY = 20 (12 < scrollY <= 38, progress <= 0.008) immediately retires introVideo and shows resting loopVideo

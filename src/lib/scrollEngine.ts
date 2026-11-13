@@ -63,6 +63,36 @@ export function unlockPageScroll(): void {
   window.lenis?.start();
 }
 
+/**
+ * React applies `muted` only as a DOM property, never as the attribute. iOS Safari's
+ * autoplay policy also looks for the attribute, so mark ambient clips explicitly.
+ */
+export function markMutedInline(video: HTMLVideoElement | null): void {
+  if (!video) return;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", "");
+}
+
+/**
+ * Run `retry` on the visitor's first gesture (activation-granting events), for clips
+ * whose autoplay was refused (iOS Low Power Mode, strict autoplay settings).
+ * Returns a disposer.
+ */
+export function onFirstUserGesture(retry: () => void): () => void {
+  const events = ["touchend", "pointerup", "click", "keydown"] as const;
+  const handler = () => {
+    dispose();
+    retry();
+  };
+  const dispose = () => {
+    for (const type of events) window.removeEventListener(type, handler, true);
+  };
+  for (const type of events) window.addEventListener(type, handler, { capture: true, passive: true });
+  return dispose;
+}
+
 export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return false;

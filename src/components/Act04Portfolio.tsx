@@ -16,9 +16,10 @@ import {
 } from "../data/profileContent";
 import {
   canPlayAmbientLoop,
-  prefersMobileVideo,
   ensureGsapPlugins,
   gsap,
+  markMutedInline,
+  prefersMobileVideo,
   prefersReducedMotion,
   SplitText,
 } from "../lib/scrollEngine";
@@ -504,7 +505,10 @@ export function Act04Portfolio({
 
                   {showPortfolioVideo ? (
                     <video
-                      ref={videoRef}
+                      ref={(el) => {
+                        videoRef.current = el;
+                        markMutedInline(el);
+                      }}
                       data-slot="portfolio-porch-video"
                       muted
                       playsInline

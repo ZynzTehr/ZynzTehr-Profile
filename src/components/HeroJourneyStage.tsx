@@ -7,15 +7,17 @@ import {
 } from "../data/profileContent";
 import {
   canPlayAmbientLoop,
-  prefersMobileVideo,
   ensureGsapPlugins,
   gsap,
   isDesktopStageEligible,
+  markMutedInline,
   navigateToAnchor,
+  onFirstUserGesture,
+  prefersMobileVideo,
   prefersReducedMotion,
+  revealHeadingLines,
   ScrollTrigger,
   SplitText,
-  revealHeadingLines,
 } from "../lib/scrollEngine";
 import { Act02Craft } from "./Act02Craft";
 import { Act03Stack } from "./Act03Stack";
@@ -442,6 +444,7 @@ export function HeroJourneyStage({
     if (!showIntroVideo || introEndedRef.current) return;
 
     const introVid = introVideoRef.current;
+    let disposeGestureRetry: (() => void) | null = null;
     if (introVid) {
       try {
         const playPromise = introVid.play();
@@ -456,6 +459,24 @@ export function HeroJourneyStage({
             }
             if (!introEndedRef.current) {
               handleIntroVideoError();
+            }
+            // Autoplay refused (e.g. iOS Low Power Mode): rest on the still and the revealed
+            // text, then fly the butterfly on the first tap while the visitor is still at the top
+            if (errName === "NotAllowedError") {
+              disposeGestureRetry = onFirstUserGesture(() => {
+                const vid = introVideoRef.current;
+                if (!vid || window.scrollY > 12) return;
+                introEndedRef.current = false;
+                vid.style.opacity = "1";
+                try {
+                  vid.currentTime = 0;
+                } catch {
+                  // Ignore seek errors while metadata loads
+                }
+                void vid.play()?.catch(() => {
+                  if (!introEndedRef.current) retireIntroVideoToRest();
+                });
+              });
             }
           });
         }
@@ -474,8 +495,9 @@ export function HeroJourneyStage({
 
     return () => {
       clearTimeout(fallbackTimer);
+      disposeGestureRetry?.();
     };
-  }, [desktopPinned, handleIntroVideoEnded, handleIntroVideoError, showIntroVideo]);
+  }, [desktopPinned, handleIntroVideoEnded, handleIntroVideoError, retireIntroVideoToRest, showIntroVideo]);
 
   // Stacked scroll handler (< 900px or short viewports)
   useEffect(() => {
@@ -1223,7 +1245,10 @@ export function HeroJourneyStage({
       <>
         {showLoopVideo ? (
           <video
-            ref={loopVideoRef}
+            ref={(el) => {
+              loopVideoRef.current = el;
+              markMutedInline(el);
+            }}
             data-slot="hero-transition-video"
             muted
             playsInline
@@ -1247,7 +1272,10 @@ export function HeroJourneyStage({
 
         {showIntroVideo ? (
           <video
-            ref={introVideoRef}
+            ref={(el) => {
+              introVideoRef.current = el;
+              markMutedInline(el);
+            }}
             data-slot="hero-intro-video"
             autoPlay
             muted

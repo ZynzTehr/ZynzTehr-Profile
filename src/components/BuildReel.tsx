@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, type Variants } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { animate, AnimatePresence, usePresence } from "motion/react";
 import type { StackReel } from "../data/profileContent";
-import { Cloth, supportsHtmlInCanvas, type ClothOptions } from "./canvasui/Cloth";
+import { formatCountdown, REEL_GEOMETRY, reelLayout } from "./reel/reelLayout";
+import type { ReelScene } from "./reel/ReelScene";
 
 export type ReelPointerMode = "hover" | "tap";
 export type ReelPlacement = "overlay" | "inline";
@@ -34,159 +35,205 @@ function prefersSavedData(): boolean {
   return Boolean(connection?.saveData);
 }
 
-/**
- * Cotton-rag held between two brass rollers: anchored at the base roller, a
- * light breeze, shallow folds, and a brush that lets the cursor send waves
- * across the sheet. Backing is the rag tone so the fabric never samples the
- * olive page and switches to its dark-page lighting.
- */
-const CLOTH_TUNING: ClothOptions = {
-  pin: "bottom",
-  wind: 1.3,
-  speed: 0.5,
-  amplitude: 15,
-  drape: 9,
-  brush: 2,
-  brushSize: 120,
-  damping: 1.1,
-  light: 0.8,
-  sheen: 0.12,
-  shadow: 0,
-  cornerRadius: 1,
-  perspective: 1000,
-  backing: [0.969, 0.945, 0.902],
-};
-
-/** Only browsers that can capture live HTML get the cloth; the rest keep the flat sheet. */
-function canRenderCloth(): boolean {
-  if (typeof window === "undefined" || typeof CanvasRenderingContext2D === "undefined") return false;
-  if (!("drawElementImage" in CanvasRenderingContext2D.prototype)) return false;
-  return supportsHtmlInCanvas();
+/** The rendered scroll needs WebGL2; everything else gets the flat print. */
+function canRenderScene(): boolean {
+  return typeof window !== "undefined" && "WebGL2RenderingContext" in window;
 }
 
-function formatClock(seconds: number): string {
-  const whole = Math.max(0, Math.round(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+/** Fetch and parse the renderer ahead of the first unfurl (call when builds become visible). */
+export function preloadReelScene(): void {
+  if (canRenderScene()) void import("./reel/ReelScene").catch(() => {});
 }
 
-const UNFURL_SPRING = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as const;
-const FURL_TWEEN = { duration: 0.24, ease: [0.55, 0, 0.75, 0.2] } as const;
-
-const containerVariants: Variants = {
-  open: { opacity: 1 },
-  closed: { opacity: 1, transition: { when: "afterChildren" } },
-};
-
-const rollerVariants: Variants = {
-  open: { opacity: 1, scaleX: 1, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } },
-  closed: { opacity: 0, scaleX: 0.72, transition: { duration: 0.16, delay: 0.12 } },
-};
-
-const sheetVariants: Variants = {
-  open: { y: "0%", transition: { ...UNFURL_SPRING, delay: 0.05 } },
-  closed: { y: "101%", transition: FURL_TWEEN },
-};
-
-const reducedVariants: Variants = {
-  open: { opacity: 1, transition: { duration: 0.12 } },
-  closed: { opacity: 0, transition: { duration: 0.12 } },
-};
-
-const inlineVariants: Variants = {
-  open: { height: "auto", transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] } },
-  closed: { height: 0, transition: { duration: 0.24, ease: [0.55, 0, 0.75, 0.2], when: "afterChildren" } },
-};
-
-interface ReelSheetProps {
+interface ReelStageProps {
   reel: StackReel;
   title: string;
-  stillOnly: boolean;
-  variants: Variants;
+  placement: ReelPlacement;
+  align: ReelAlign;
+  reduced: boolean;
 }
 
-function ReelSheet({ reel, title, stillOnly, variants }: ReelSheetProps) {
+function ReelStage({ reel, title, placement, align, reduced }: ReelStageProps) {
+  const [isPresent, safeToRemove] = usePresence();
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const threadRef = useRef<HTMLSpanElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
+  const sceneRef = useRef<ReelScene | null>(null);
+  const [mode, setMode] = useState<"scene" | "print">(() => (canRenderScene() ? "scene" : "print"));
+  const [width, setWidth] = useState(400);
+  const [remaining, setRemaining] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const stillOnly = reduced || prefersSavedData();
+  const layout = reelLayout(width);
 
-  // Drive the terracotta thread from playback time with a transform-only rAF loop.
+  // Reserve the exact height for the measured width before first paint
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (box && box.clientWidth > 0) setWidth(box.clientWidth);
+  }, []);
+
+  // Rendered scroll: load three.js lazily, unfurl, and follow the container's width
   useEffect(() => {
-    if (!playing) return;
-    let frame = 0;
-    const tick = () => {
-      const video = videoRef.current;
-      const thread = threadRef.current;
-      if (video && thread && video.duration > 0) {
-        thread.style.transform = `scaleX(${Math.min(1, video.currentTime / video.duration)})`;
-      }
-      frame = requestAnimationFrame(tick);
+    if (mode !== "scene") return;
+    const box = boxRef.current;
+    const canvas = canvasRef.current;
+    if (!box || !canvas) return;
+    let cancelled = false;
+    let observer: ResizeObserver | null = null;
+
+    import("./reel/ReelScene")
+      .then(({ ReelScene }) => {
+        if (cancelled) return;
+        const scene = new ReelScene({
+          canvas,
+          pointerTarget: box,
+          video: stillOnly ? null : videoRef.current,
+          poster: reel.poster,
+          title,
+          reduced: stillOnly,
+          onFrameError: () => setMode("print"),
+        });
+        sceneRef.current = scene;
+        scene.setSize(box.clientWidth || 400);
+        void scene.prepare().then(() => {
+          if (!cancelled) void scene.open();
+        });
+        if (typeof ResizeObserver !== "undefined") {
+          observer = new ResizeObserver(() => {
+            const next = box.clientWidth;
+            if (next <= 0) return;
+            setWidth(next);
+            scene.setSize(next);
+          });
+          observer.observe(box);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMode("print");
+      });
+
+    const onLost = (event: Event) => {
+      event.preventDefault();
+      setMode("print");
     };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [playing]);
+    canvas.addEventListener("webglcontextlost", onLost);
 
-  const [cloth] = useState(() => !stillOnly && canRenderCloth());
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      canvas.removeEventListener("webglcontextlost", onLost);
+      sceneRef.current?.dispose();
+      sceneRef.current = null;
+    };
+  }, [mode, reel.poster, stillOnly, title]);
 
-  const paper = (
-    <div className="build-reel__paper">
-      <div className="build-reel__frame">
-        <img
-          src={reel.poster}
-          alt=""
-          width={960}
-          height={600}
-          decoding="async"
-          className="build-reel__still"
-        />
-        {stillOnly ? null : (
-          <video
-            ref={(el) => {
-              videoRef.current = el;
-              // React does not always reflect `muted` as an attribute; set the property before autoplay.
-              if (el) el.muted = true;
-            }}
-            data-slot="build-reel-video"
-            src={reel.video}
-            poster={reel.poster}
-            muted
-            playsInline
-            loop
-            autoPlay
-            preload="auto"
-            tabIndex={-1}
-            onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-            onPlaying={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            className={`build-reel__video ${playing ? "is-playing" : ""}`}
-          />
-        )}
-      </div>
-      <div className="build-reel__meta font-utility">
-        <span className="build-reel__title">{title}</span>
-        <span className="build-reel__clock">
-          {stillOnly ? "Still" : duration ? formatClock(duration) : "Reel"}
-        </span>
-      </div>
+  // Furl before leaving: roll the sheet back onto the base roller, then collapse inline space
+  useEffect(() => {
+    if (isPresent) return;
+    let cancelled = false;
+    const finish = () => {
+      if (cancelled) return;
+      const box = boxRef.current;
+      if (placement === "inline" && box && !reduced) {
+        void animate(box, { height: 0 }, { duration: 0.26, ease: [0.55, 0, 0.75, 0.2] }).then(() => safeToRemove?.());
+      } else {
+        safeToRemove?.();
+      }
+    };
+    const scene = sceneRef.current;
+    if (scene) void scene.close().then(finish);
+    else window.setTimeout(finish, reduced ? 0 : 180);
+    return () => {
+      cancelled = true;
+    };
+  }, [isPresent, placement, reduced, safeToRemove]);
+
+  const { bleed, rollerOverhang, rollerRadius } = REEL_GEOMETRY;
+
+  return (
+    <div
+      ref={boxRef}
+      data-slot="build-reel"
+      data-placement={placement}
+      data-align={placement === "overlay" ? align : undefined}
+      data-render={mode}
+      aria-hidden="true"
+      className={`build-reel build-reel--${placement}`}
+      style={{ height: layout.height }}
+    >
       {stillOnly ? null : (
-        <div className="build-reel__thread">
-          <span ref={threadRef} />
+        <video
+          ref={(el) => {
+            videoRef.current = el;
+            // React does not always reflect `muted` as an attribute; set the property before autoplay.
+            if (el) el.muted = true;
+          }}
+          data-slot="build-reel-video"
+          className="build-reel__video"
+          src={reel.video}
+          poster={reel.poster}
+          muted
+          playsInline
+          loop
+          autoPlay
+          preload="auto"
+          tabIndex={-1}
+          onTimeUpdate={(event) => {
+            const video = event.currentTarget;
+            if (mode !== "print" || !(video.duration > 0)) return;
+            setRemaining(formatCountdown(video.duration - video.currentTime));
+            setProgress(video.currentTime / video.duration);
+          }}
+          style={{
+            left: layout.plate.x + rollerOverhang,
+            top: layout.plate.y + rollerRadius,
+            width: layout.plate.w,
+            height: layout.plate.h,
+            // In the rendered scroll the clip is a texture; keep the element decoding but unseen
+            opacity: mode === "scene" ? 0 : 1,
+          }}
+        />
+      )}
+
+      {mode === "scene" ? (
+        <canvas
+          ref={canvasRef}
+          className="build-reel__canvas"
+          style={{
+            left: -bleed.x,
+            top: -bleed.top,
+            width: layout.width + bleed.x * 2,
+            height: layout.height + bleed.top + bleed.bottom,
+          }}
+        />
+      ) : (
+        <div className="build-reel__print">
+          <div className="build-reel__rod" />
+          <div className="build-reel__sheet" style={{ height: layout.paperHeight - rollerRadius * 2 }}>
+            <img
+              className="build-reel__plate"
+              src={reel.poster}
+              alt=""
+              width={960}
+              height={600}
+              decoding="async"
+              style={{ left: layout.plate.x, top: layout.plate.y - rollerRadius, width: layout.plate.w, height: layout.plate.h }}
+            />
+            <div className="build-reel__rule" style={{ left: layout.plate.x, right: layout.plate.x, top: layout.ruleY - rollerRadius }}>
+              <span style={{ transform: `scaleX(${stillOnly ? 0 : progress})` }} />
+            </div>
+            <div
+              className="build-reel__label"
+              style={{ left: layout.caption.x, right: layout.caption.x, top: layout.caption.y - rollerRadius, height: layout.caption.h }}
+            >
+              <span className="build-reel__title">{title}</span>
+              <span className="build-reel__clock">{stillOnly ? "Still" : (remaining ?? "Reel")}</span>
+            </div>
+          </div>
+          <div className="build-reel__rod" />
         </div>
       )}
     </div>
-  );
-
-  return (
-    <motion.div variants={variants} className="build-reel__sheet">
-      <div className="build-reel__roller" />
-      {cloth ? (
-        <Cloth className="build-reel__cloth" {...CLOTH_TUNING}>
-          {paper}
-        </Cloth>
-      ) : (
-        paper
-      )}
-    </motion.div>
   );
 }
 
@@ -200,56 +247,16 @@ export interface BuildReelProps {
 }
 
 /**
- * A cotton-rag reel that unfurls upward out of a brass roller resting on the
- * card's top edge and plays the build's mirrored portfolio clip. Decorative only:
- * every fact it shows is already in the card, so it stays out of the a11y tree.
+ * A hanging cotton-rag scroll that unfurls upward from the card's top edge and
+ * plays the build's mirrored portfolio clip, printed inside a plate mark with a
+ * typeset label and countdown. Decorative only: every fact it shows is already
+ * in the card, so it stays out of the accessibility tree.
  */
 export function BuildReel({ reel, title, open, placement, align = "start", reduced }: BuildReelProps) {
-  const stillOnly = reduced || prefersSavedData();
-  const sheetMotion = reduced ? reducedVariants : sheetVariants;
-
   return (
     <AnimatePresence initial={false}>
       {open ? (
-        placement === "overlay" ? (
-          <motion.div
-            key="reel"
-            data-slot="build-reel"
-            data-placement="overlay"
-            data-align={align}
-            aria-hidden="true"
-            className="build-reel build-reel--overlay"
-            variants={containerVariants}
-            initial="closed"
-            animate="open"
-            exit="closed"
-          >
-            <div className="build-reel__window">
-              <ReelSheet reel={reel} title={title} stillOnly={stillOnly} variants={sheetMotion} />
-            </div>
-            <motion.div
-              className="build-reel__roller build-reel__roller--base"
-              variants={reduced ? reducedVariants : rollerVariants}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="reel"
-            data-slot="build-reel"
-            data-placement="inline"
-            aria-hidden="true"
-            className="build-reel build-reel--inline"
-            variants={reduced ? reducedVariants : inlineVariants}
-            initial="closed"
-            animate="open"
-            exit="closed"
-          >
-            <div className="build-reel__window">
-              <ReelSheet reel={reel} title={title} stillOnly={stillOnly} variants={sheetMotion} />
-            </div>
-            <div className="build-reel__roller build-reel__roller--base" />
-          </motion.div>
-        )
+        <ReelStage key="reel" reel={reel} title={title} placement={placement} align={align} reduced={reduced} />
       ) : null}
     </AnimatePresence>
   );

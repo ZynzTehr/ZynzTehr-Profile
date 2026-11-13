@@ -725,6 +725,14 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     await page.waitForTimeout(500);
     expect(await reelVideo.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(firstTime);
     await maybeCapture(page, "desktop-03-stack-reel.png");
+    // The reel's canvas bleed must never cover the card's own links
+    const liveLinkOnTop = await fleetCard
+      .getByRole("link", { name: "Fleet Pulse live deployment" })
+      .evaluate((link) => {
+        const r = link.getBoundingClientRect();
+        return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === link;
+      });
+    expect(liveLinkOnTop).toBe(true);
     await assertZeroAxeViolations(page, "Desktop Act 03 build reel open");
     await page.mouse.move(8, 8);
     await expect(fleetReel).toHaveCount(0);
@@ -942,7 +950,7 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
           await expect(mobileReelToggle).toHaveAttribute("aria-pressed", "true");
           const mobileReel = mobileInlineBuilds.locator('[data-slot="build-reel"][data-placement="inline"]');
           await expect(mobileReel).toBeVisible();
-          await page.waitForTimeout(450);
+          await page.waitForTimeout(1500);
           await maybeCapture(page, "mobile-03-stack-reel.png");
           expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
           await assertZeroAxeViolations(page, "Mobile Act 03 inline build reel");

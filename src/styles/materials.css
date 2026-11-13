@@ -250,27 +250,25 @@
     animation: atelier-plumb-arrow-morph 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
 
-  /* Act 03 build reel: cotton-rag scroll unfurling out of a brass roller */
+  /* Act 03 build reel: rendered hanging scroll (see src/components/reel/ReelScene.ts) */
   .build-reel {
-    --reel-roller-h: 9px;
-    --reel-cap: 13px;
-    --reel-gutter: 8px;
+    position: relative;
   }
 
   .build-reel--overlay {
     position: absolute;
-    bottom: calc(100% - var(--reel-roller-h) / 2);
+    bottom: calc(100% - 5px);
     z-index: 30;
-    width: max(100% + 2 * var(--reel-gutter), 25rem);
+    width: max(100% + 24px, 26.5rem);
     pointer-events: none;
   }
 
   .build-reel--overlay[data-align="start"] {
-    left: calc(-1 * var(--reel-gutter));
+    left: -12px;
   }
 
   .build-reel--overlay[data-align="end"] {
-    right: calc(-1 * var(--reel-gutter));
+    right: -12px;
   }
 
   .build-reel--overlay[data-align="center"] {
@@ -279,182 +277,127 @@
   }
 
   .build-reel--inline {
-    position: relative;
     flex-basis: 100%;
-    overflow: hidden;
-    margin-inline: calc(-1 * var(--reel-gutter));
+    margin: 4px -4px 14px;
+    overflow: visible;
   }
 
-  .build-reel--inline .build-reel__window {
-    padding-bottom: 0;
+  /* The canvas bleeds past the sheet for finials, folds and shadow; it never takes input */
+  .build-reel__canvas {
+    position: absolute;
+    display: block;
+    pointer-events: none;
   }
 
-  .build-reel--inline > .build-reel__roller--base {
-    margin-bottom: 10px;
+  .build-reel--overlay[data-render="scene"] {
+    pointer-events: auto;
   }
 
-  .build-reel__window {
-    overflow: hidden;
-    padding: 0 var(--reel-gutter);
+  .build-reel__video {
+    position: absolute;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .build-reel[data-render="print"] .build-reel__video {
+    z-index: 1;
+    animation: build-reel-develop 420ms ease-out both;
+  }
+
+  /* Print fallback (no WebGL2): the same sheet, flat and still */
+  .build-reel__print {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    filter: drop-shadow(0 18px 22px rgba(8, 14, 11, 0.5)) drop-shadow(0 2px 4px rgba(8, 14, 11, 0.35));
+    animation: build-reel-develop 420ms ease-out both;
+  }
+
+  .build-reel__rod {
+    position: relative;
+    height: 10px;
+    margin: 0 17px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #4a3b31 0%, #1b1410 42%, #0f0b08 100%);
+  }
+
+  .build-reel__rod::before,
+  .build-reel__rod::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 13px;
+    height: 14px;
+    border-radius: 45%;
+    background: radial-gradient(circle at 36% 30%, #f3e1b6 0%, #c69f5f 44%, #6a4f25 100%);
+  }
+
+  .build-reel__rod::before {
+    left: -17px;
+  }
+
+  .build-reel__rod::after {
+    right: -17px;
   }
 
   .build-reel__sheet {
-    container-type: inline-size;
-    pointer-events: auto;
-    filter: drop-shadow(0 22px 26px rgba(8, 14, 11, 0.55)) drop-shadow(0 3px 5px rgba(8, 14, 11, 0.35));
-  }
-
-  .build-reel--inline .build-reel__sheet {
-    padding-top: 6px;
-    filter: drop-shadow(0 10px 14px rgba(8, 14, 11, 0.45));
-  }
-
-  .build-reel__roller {
     position: relative;
-    height: var(--reel-roller-h);
-    margin: 0 2px;
-    border-radius: 999px;
-    background: linear-gradient(
-      180deg,
-      #f0dcae 0%,
-      #c9a160 28%,
-      var(--accent-brass) 52%,
-      #6f5328 82%,
-      #4b381b 100%
-    );
-    box-shadow:
-      0 2px 4px -1px rgba(8, 14, 11, 0.55),
-      0 0 0 0.5px rgba(40, 28, 12, 0.55);
+    margin: 0 17px;
+    background-color: #f3ecdf;
+    background-image: url("/media/paper-grain.webp");
+    background-size: 192px 192px;
+    background-blend-mode: soft-light;
   }
 
-  .build-reel__roller::before,
-  .build-reel__roller::after {
-    content: "";
+  .build-reel__plate {
     position: absolute;
-    top: calc((var(--reel-roller-h) - var(--reel-cap)) / 2);
-    width: var(--reel-cap);
-    height: var(--reel-cap);
-    border-radius: 50%;
-    background: radial-gradient(circle at 34% 30%, #f6e6bf 0%, #b88f52 46%, #5c4420 100%);
-    box-shadow: 0 1px 2px rgba(8, 14, 11, 0.6);
-  }
-
-  .build-reel__roller::before {
-    left: calc(-1 * var(--reel-cap) / 2);
-  }
-
-  .build-reel__roller::after {
-    right: calc(-1 * var(--reel-cap) / 2);
-  }
-
-  .build-reel__roller--base {
-    margin-inline: calc(var(--reel-gutter) + 2px);
-    transform-origin: center;
-  }
-
-  .build-reel__paper {
-    margin: -3px 6px 0;
-    padding: 12px 10px 9px;
-    color: var(--ink-espresso);
-    background-color: var(--surface-rag);
-    background-image:
-      linear-gradient(
-        180deg,
-        rgba(33, 24, 19, 0.2) 0,
-        rgba(33, 24, 19, 0) 11px,
-        rgba(33, 24, 19, 0) calc(100% - 9px),
-        rgba(33, 24, 19, 0.16) 100%
-      ),
-      linear-gradient(180deg, rgba(255, 253, 249, 0.7) 0%, rgba(244, 236, 222, 0.4) 100%),
-      url("/media/paper-grain.webp");
-    background-size: auto, auto, 192px 192px;
-    background-blend-mode: normal, normal, soft-light;
-  }
-
-  /* Cloth wrapper: the paper lives in an absolutely positioned capture canvas,
-     so the wrapper carries the paper's height (16:10 frame + fixed chrome). */
-  .build-reel__cloth {
-    margin: -3px 6px 0;
-    height: calc((100cqw - 32px) * 0.625 + 54px);
-  }
-
-  .build-reel__cloth .build-reel__paper {
-    height: 100%;
-    margin: 0;
-  }
-
-  .build-reel__frame {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    background: #18241d;
-  }
-
-  .build-reel__frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    box-shadow:
-      inset 0 0 0 1px rgba(33, 24, 19, 0.88),
-      inset 0 0 18px rgba(8, 14, 11, 0.22);
-  }
-
-  .build-reel__still,
-  .build-reel__video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     object-fit: cover;
+    outline: 1px solid rgba(42, 32, 26, 0.12);
+    outline-offset: 6px;
   }
 
-  .build-reel__video {
-    opacity: 0;
-    transition: opacity 200ms ease-out;
+  .build-reel__rule {
+    position: absolute;
+    height: 1px;
+    background: rgba(42, 32, 26, 0.16);
   }
 
-  .build-reel__video.is-playing {
-    opacity: 1;
+  .build-reel__rule > span {
+    display: block;
+    height: 100%;
+    background: rgba(42, 32, 26, 0.62);
+    transform-origin: left center;
   }
 
-  .build-reel__meta {
+  .build-reel__label {
+    position: absolute;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
-    padding: 7px 2px 0;
-    font-size: 14px;
-    line-height: 1.2;
+    gap: 14px;
+    padding-top: 5px;
+    color: #2a201a;
   }
 
   .build-reel__title {
     overflow: hidden;
-    font-weight: 500;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-style: italic;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .build-reel__clock {
     flex-shrink: 0;
-    color: var(--ink-muted-dark);
+    font-family: var(--font-util);
+    font-size: 14px;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-  }
-
-  .build-reel__thread {
-    height: 2px;
-    margin: 6px 2px 0;
-    overflow: hidden;
-    background: rgba(166, 64, 40, 0.16);
-  }
-
-  .build-reel__thread > span {
-    display: block;
-    height: 100%;
-    background: var(--accent-monarch);
-    transform: scaleX(0);
-    transform-origin: left center;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 }
 
@@ -534,5 +477,16 @@ dialog::backdrop {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@keyframes build-reel-develop {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

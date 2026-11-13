@@ -10,7 +10,7 @@ import {
   type StackToolId,
 } from "../data/profileContent";
 import { ensureGsapPlugins, gsap, prefersReducedMotion } from "../lib/scrollEngine";
-import { BuildReel, useReelPointerMode, type ReelAlign } from "./BuildReel";
+import { BuildReel, preloadReelScene, useReelPointerMode, type ReelAlign } from "./BuildReel";
 
 const REEL_OPEN_DELAY_MS = 140;
 const REEL_CLOSE_DELAY_MS = 160;
@@ -111,6 +111,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
   useEffect(() => {
     clearReelTimers();
     setOpenReelId(null);
+    if (selectedToolId) preloadReelScene();
   }, [selectedToolId, clearReelTimers]);
 
   useEffect(() => clearReelTimers, [clearReelTimers]);

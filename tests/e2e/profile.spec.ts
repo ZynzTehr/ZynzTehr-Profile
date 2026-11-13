@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const CONTACT_EMAIL = "jorgeforwork88@gmail.com";
 const PORTFOLIO_URL = "https://work.jorgebucio.com/";
@@ -152,6 +152,30 @@ async function settleHeroOpening(page: Page): Promise<void> {
     timeout: 8000,
   });
   await page.waitForTimeout(250);
+}
+
+async function swipeRight(context: BrowserContext, page: Page, fromX: number, y: number, distance: number) {
+  const touch = await context.newCDPSession(page);
+  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: fromX, y }] });
+  for (let step = 1; step <= 12; step += 1) {
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: fromX + (distance * step) / 12, y }],
+    });
+    await page.waitForTimeout(16);
+  }
+  await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+}
+
+async function heroMatInsets(page: Page): Promise<number[] | null> {
+  return page.evaluate(() => {
+    const frame = document.querySelector('[data-act="00-hero"] [data-slot="monarch-plate-frame"]');
+    const img = frame?.querySelector("img");
+    if (!frame || !img) return null;
+    const f = frame.getBoundingClientRect();
+    const i = img.getBoundingClientRect();
+    return [i.top - f.top, f.right - i.right, f.bottom - i.bottom, i.left - f.left];
+  });
 }
 
 async function findOverlappingVisibleText(page: Page): Promise<string[]> {
@@ -1042,6 +1066,154 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
       await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
 
       await assertDomWideE1Invariants(page, "Mobile 390x844 stacked DOM");
+      diagnostics.assertClean();
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Tablet portrait 810x1080 touch: stacked layout, full-size videos, intact mat, slide-over chapter tracking, inline reels, and touch menu", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: { width: 810, height: 1080 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await context.newPage();
+    const diagnostics = trackPageDiagnostics(page);
+    const chapterBar = page.locator('[data-slot="chapter-bar"]');
+
+    try {
+      await page.goto("/", { waitUntil: "networkidle" });
+      await settleHeroOpening(page);
+      await maybeCapture(page, "tablet-portrait-00-hero.png");
+
+      // Portrait tablets take the stacked layout but keep the full-size (not phone) video sources
+      await expect(page.locator('[data-slot="hero-journey-stacked"]')).toHaveCount(1);
+      const introSrc = await page
+        .locator('video[data-slot="hero-intro-video"]')
+        .evaluate((v: HTMLVideoElement) => v.currentSrc);
+      expect(introSrc).toMatch(/hero-monarch-intro\.(webm|mp4)$/);
+      expect(introSrc).not.toContain("-m.mp4");
+
+      const insets = await heroMatInsets(page);
+      expect(insets).not.toBeNull();
+      for (const inset of insets!) expect(inset).toBeGreaterThanOrEqual(6);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(810);
+      await assertZeroAxeViolations(page, "Tablet portrait hero");
+
+      // The espresso Journey sheet slides over the sticky hero, which fades out beneath it
+      const journeyTop = await page.evaluate(
+        () => document.querySelector('[data-act="01-journey"]')!.getBoundingClientRect().top + window.scrollY,
+      );
+      await scrollToYAndFlushScrub(page, Math.round(journeyTop));
+      await page.waitForTimeout(400);
+      await maybeCapture(page, "tablet-portrait-01-journey.png");
+      const recedeOpacity = await page
+        .locator("[data-mobile-recede]")
+        .evaluate((el) => Number.parseFloat(getComputedStyle(el).opacity));
+      expect(recedeOpacity).toBeLessThan(0.18);
+      await expect(chapterBar).toContainText("I · My Journey");
+      expect(await findOverlappingVisibleText(page)).toEqual([]);
+      await assertZeroAxeViolations(page, "Tablet portrait Journey");
+
+      // Scrolling back up hands the chapter label back to the opening folio
+      await scrollToYAndFlushScrub(page, 0);
+      await expect(chapterBar).toContainText("Menifee, Southern California");
+
+      // Chapter III below 1024px: builds inline under the tool, and a Reel toggle unrolls the scroll in the card
+      const stackTs = page.locator('[data-act="03-stack"] button[data-tool-id="typescript"]');
+      await stackTs.scrollIntoViewIfNeeded();
+      await stackTs.tap();
+      const inlineBuilds = page.locator('[data-act="03-stack"] [data-slot="stack-related-builds"]');
+      await expect(inlineBuilds).toContainText("Built with TypeScript");
+      await expect(inlineBuilds).toContainText("Tap Reel to screen a build");
+      const reelToggle = inlineBuilds.getByRole("button", { name: "JobSeance reel" });
+      await reelToggle.tap();
+      await expect(reelToggle).toHaveAttribute("aria-pressed", "true");
+      const inlineReel = inlineBuilds.locator('[data-slot="build-reel"][data-placement="inline"]');
+      await expect(inlineReel).toBeVisible();
+      await page.waitForTimeout(1500);
+      await maybeCapture(page, "tablet-portrait-03-reel.png");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(810);
+      await reelToggle.tap();
+      await expect(inlineReel).toHaveCount(0);
+      await stackTs.tap();
+
+      // The porch walk-out plays when its print scrolls into view (full-size source)
+      const porch = page.locator('[data-slot="portfolio-porch-video"]');
+      await porch.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() => porch.evaluate((v: HTMLVideoElement) => (v.paused ? 0 : v.currentTime)), { timeout: 8000 })
+        .toBeGreaterThan(0);
+      expect(await porch.evaluate((v: HTMLVideoElement) => v.currentSrc)).not.toContain("-m.mp4");
+
+      // Touch menu: labelled close, backdrop tap beside the 560px sheet, and swipe right all close it
+      await scrollToYAndFlushScrub(page, 0);
+      await page.waitForTimeout(450);
+      const menuTrigger = page.locator('[data-slot="chapter-bar"] button');
+      const menuDialog = page.locator("#atelier-menu-dialog");
+      await menuTrigger.tap();
+      await waitForDialogSettled(page, "#atelier-menu-dialog");
+      await expect(page.locator('[data-slot="menu-close-button"]')).toContainText("Close");
+      await assertZeroAxeViolations(page, "Tablet portrait menu open");
+      await page.touchscreen.tap(60, 540);
+      await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
+
+      await menuTrigger.tap();
+      await waitForDialogSettled(page, "#atelier-menu-dialog");
+      await swipeRight(context, page, 320, 540, 260);
+      await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
+
+      diagnostics.assertClean();
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Tablet landscape 1194x834 touch: desktop stage with tap-mode Reel toggles hanging the centred scroll", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: { width: 1194, height: 834 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await context.newPage();
+    const diagnostics = trackPageDiagnostics(page);
+
+    try {
+      await page.goto("/", { waitUntil: "networkidle" });
+      await settleHeroOpening(page);
+      await expect(page.locator('[data-slot="hero-journey-stacked"]')).toHaveCount(0);
+
+      await scrollToStageProgress(page, 0.955);
+      await page.waitForTimeout(400);
+      const stage = '[data-slot="stage-stack-layer"]';
+      await page.locator(`${stage} button[data-tool-id="postgresql"]`).tap();
+      const sheet = page.locator(`${stage} [data-slot="stack-related-builds"]`);
+      await expect(sheet).toContainText("Built with PostgreSQL");
+      await expect(sheet).toContainText("Tap Reel to screen a build");
+
+      const toggle = sheet.getByRole("button", { name: "Campfire of the Damned reel" });
+      await toggle.tap();
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      const hung = page.locator(`${stage} [data-slot="build-reel"][data-placement="hang"]`);
+      await expect(hung).toBeVisible();
+      await page.waitForTimeout(1300);
+      await maybeCapture(page, "tablet-landscape-03-reel.png");
+      const box = await hung.boundingBox();
+      expect(box).not.toBeNull();
+      expect(Math.abs(box!.x + box!.width / 2 - 1194 / 2)).toBeLessThanOrEqual(2);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(834 * 0.62);
+      const sheetBox = await sheet.boundingBox();
+      expect(box!.y + box!.height).toBeLessThan(sheetBox!.y);
+
+      await toggle.tap();
+      await expect(hung).toHaveCount(0, { timeout: 3000 });
       diagnostics.assertClean();
     } finally {
       await context.close();

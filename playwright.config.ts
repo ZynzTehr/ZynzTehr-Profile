@@ -1,9 +1,18 @@
 import fs from "node:fs";
-import { chromium, defineConfig, devices } from "@playwright/test";
+import { chromium, defineConfig, devices, webkit } from "@playwright/test";
 
 const hasBundledChromium = (() => {
   try {
     return fs.existsSync(chromium.executablePath());
+  } catch {
+    return false;
+  }
+})();
+
+// Safari-engine checks run only where WebKit is installed (npx playwright install webkit)
+const hasWebKit = (() => {
+  try {
+    return fs.existsSync(webkit.executablePath());
   } catch {
     return false;
   }
@@ -29,18 +38,27 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: "http://127.0.0.1:4173",
-    channel: browserChannel,
     trace: "retain-on-failure",
   },
   projects: [
     {
       name: "chromium",
+      testIgnore: /webkit\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         channel: browserChannel,
         viewport: { width: 1440, height: 900 },
       },
     },
+    ...(hasWebKit
+      ? [
+          {
+            name: "webkit-ipad",
+            testMatch: /webkit\.spec\.ts/,
+            use: { ...devices["iPad (gen 7)"] },
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: "npm run build && npx vite preview --host 127.0.0.1 --port 4173 --strictPort",

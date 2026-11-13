@@ -368,11 +368,14 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
 
         <ul
           className={`${embeddedInStage ? "mt-1" : "mt-1.5"} grid grid-cols-1 ${
-            tool.relatedBuilds.length === 2
-              ? "md:grid-cols-2"
-              : tool.relatedBuilds.length >= 3
-                ? "md:grid-cols-3"
-                : ""
+            // Inline under a tool (compact layouts) the sheet is one column wide: stack the builds
+            inlineMobileBuilds
+              ? ""
+              : tool.relatedBuilds.length === 2
+                ? "md:grid-cols-2"
+                : tool.relatedBuilds.length >= 3
+                  ? "md:grid-cols-3"
+                  : ""
           }`}
         >
           {tool.relatedBuilds.map((build) => {
@@ -419,7 +422,9 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                       }
                     : undefined
                 }
-                className={`build-sheet__entry relative border-[#211813]/12 transition-colors duration-300 not-first:border-t md:not-first:border-t-0 md:not-first:border-l ${
+                className={`build-sheet__entry relative border-[#211813]/12 transition-colors duration-300 not-first:border-t ${
+                  inlineMobileBuilds ? "" : "md:not-first:border-t-0 md:not-first:border-l"
+                } ${
                   reelOpen ? "is-screening" : ""
                 } ${embeddedInStage ? "px-3.5 py-2" : "px-4 py-3"} ${
                   isSingle ? "md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-6" : ""

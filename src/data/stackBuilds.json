@@ -4,55 +4,100 @@
       "id": "fleet-pulse",
       "title": "Fleet Pulse",
       "href": "https://fleet-pulse-gilt.vercel.app/",
-      "sourceHref": "https://github.com/ZynzTehr/fleet-pulse"
+      "sourceHref": "https://github.com/ZynzTehr/fleet-pulse",
+      "reel": {
+        "video": "/media/builds/fleet-pulse/reel-f675a6d932.mp4",
+        "poster": "/media/builds/fleet-pulse/reel-f675a6d932.webp",
+        "source": "repo"
+      }
     },
     "job-seance": {
       "id": "job-seance",
       "title": "JobSeance",
       "href": "https://job-seance.vercel.app/",
-      "sourceHref": "https://github.com/ZynzTehr/JobSeance"
+      "sourceHref": "https://github.com/ZynzTehr/JobSeance",
+      "reel": {
+        "video": "/media/builds/job-seance/reel-35ac66b8e2.mp4",
+        "poster": "/media/builds/job-seance/reel-35ac66b8e2.webp",
+        "source": "repo"
+      }
     },
     "torque-line": {
       "id": "torque-line",
       "title": "TorqueLine",
       "href": "https://torque-line.vercel.app/",
-      "sourceHref": "https://github.com/ZynzTehr/torque-line"
+      "sourceHref": "https://github.com/ZynzTehr/torque-line",
+      "reel": {
+        "video": "/media/builds/torque-line/reel-1f3cf89248.mp4",
+        "poster": "/media/builds/torque-line/reel-1f3cf89248.webp",
+        "source": "repo"
+      }
     },
     "campfire": {
       "id": "campfire",
       "title": "Campfire of the Damned",
       "href": "https://campfire-of-the-damned-five.vercel.app/",
-      "sourceHref": "https://github.com/ZynzTehr/campfire-of-the-damned"
+      "sourceHref": "https://github.com/ZynzTehr/campfire-of-the-damned",
+      "reel": {
+        "video": "/media/builds/campfire/reel-e10b06f00b.mp4",
+        "poster": "/media/builds/campfire/reel-e10b06f00b.webp",
+        "source": "repo"
+      }
     },
     "ani-beam": {
       "id": "ani-beam",
       "title": "AniBeam",
       "href": "https://ani-beam.vercel.app/",
-      "sourceHref": "https://github.com/ZynzTehr/aniBeam"
+      "sourceHref": "https://github.com/ZynzTehr/aniBeam",
+      "reel": {
+        "video": "/media/builds/ani-beam/reel-b7fdc88d7e.mp4",
+        "poster": "/media/builds/ani-beam/reel-b7fdc88d7e.webp",
+        "source": "repo"
+      }
     },
     "new-age-chess": {
       "id": "new-age-chess",
       "title": "New Age Chess",
       "href": "https://zynztehr.github.io/new-age-chess/",
-      "sourceHref": "https://github.com/ZynzTehr/new-age-chess"
+      "sourceHref": "https://github.com/ZynzTehr/new-age-chess",
+      "reel": {
+        "video": "/media/builds/new-age-chess/reel-7e0f481195.mp4",
+        "poster": "/media/builds/new-age-chess/reel-7e0f481195.webp",
+        "source": "repo"
+      }
     },
     "webgl-portfolio": {
       "id": "webgl-portfolio",
       "title": "3D WebGL Portfolio",
       "href": "https://work.jorgebucio.com/",
-      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Portfolio"
+      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Portfolio",
+      "reel": {
+        "video": "/media/builds/webgl-portfolio/reel-22b64a1014.mp4",
+        "poster": "/media/builds/webgl-portfolio/reel-22b64a1014.webp",
+        "source": "local"
+      }
     },
     "atelier-folio": {
       "id": "atelier-folio",
       "title": "Atelier Folio",
       "href": "https://jorgebucio.com/",
-      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Profile"
+      "sourceHref": "https://github.com/ZynzTehr/ZynzTehr-Profile",
+      "reel": {
+        "video": "/media/builds/atelier-folio/reel-3bca93e5de.mp4",
+        "poster": "/media/builds/atelier-folio/reel-3bca93e5de.webp",
+        "source": "borrowed"
+      }
     },
     "vscode-fx": {
       "id": "vscode-fx",
       "title": "VSCode FX",
       "href": "https://marketplace.visualstudio.com/items?itemName=VSCodeFX.vscode-fx",
-      "sourceHref": "https://github.com/ZynzTehr/vscode-fx"
+      "sourceHref": "https://github.com/ZynzTehr/vscode-fx",
+      "reel": {
+        "video": "/media/builds/vscode-fx/reel-e0b01d0500.mp4",
+        "poster": "/media/builds/vscode-fx/reel-e0b01d0500.webp",
+        "source": "borrowed"
+      }
     }
   },
   "toolBuilds": {

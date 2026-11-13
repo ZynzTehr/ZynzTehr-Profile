@@ -626,7 +626,7 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
 
 describe("Act03Stack build reels", () => {
   const reelIn = (container: HTMLElement, projectId: string) =>
-    container.querySelector(`li[data-project-id="${projectId}"] [data-slot="build-reel"]`);
+    container.querySelector(`[data-slot="build-reel"][data-project="${projectId}"]`);
   const card = (container: HTMLElement, projectId: string) =>
     container.querySelector<HTMLElement>(`li[data-project-id="${projectId}"]`)!;
 
@@ -643,8 +643,9 @@ describe("Act03Stack build reels", () => {
     await waitFor(() => expect(reelIn(container, "campfire")).not.toBeNull());
     const reel = reelIn(container, "campfire")!;
     expect(reel).toHaveAttribute("aria-hidden", "true");
-    expect(reel).toHaveAttribute("data-placement", "overlay");
-    expect(reel).toHaveAttribute("data-align", "start");
+    // Desktop hangs one scroll from the top of the chapter, outside the cards
+    expect(reel).toHaveAttribute("data-placement", "hang");
+    expect(reel.closest("li")).toBeNull();
     const video = reel.querySelector("video")!;
     expect(video.getAttribute("src")).toMatch(/^\/media\/builds\/campfire\/reel-[0-9a-f]{10}\.mp4$/);
     expect(video.muted).toBe(true);
@@ -653,7 +654,7 @@ describe("Act03Stack build reels", () => {
 
     await user.hover(card(container, "job-seance"));
     await waitFor(() => {
-      expect(reelIn(container, "job-seance")).toHaveAttribute("data-align", "center");
+      expect(reelIn(container, "job-seance")).not.toBeNull();
       expect(reelIn(container, "campfire")).toBeNull();
     });
     expect(container.querySelectorAll('[data-slot="build-reel"]')).toHaveLength(1);
@@ -664,7 +665,7 @@ describe("Act03Stack build reels", () => {
     act(() => {
       screen.getByRole("link", { name: "AniBeam live deployment" }).focus();
     });
-    await waitFor(() => expect(reelIn(container, "ani-beam")).toHaveAttribute("data-align", "end"));
+    await waitFor(() => expect(reelIn(container, "ani-beam")).not.toBeNull());
     act(() => {
       screen.getByRole("link", { name: "AniBeam source repository" }).focus();
     });
@@ -733,12 +734,14 @@ describe("Act03Stack build reels", () => {
     expect(reel.textContent).toContain("Still");
   });
 
-  it("unrolls inline inside the card on compact layouts instead of overlaying upward", async () => {
+  it("unrolls inline inside the card on compact layouts instead of hanging from the top", async () => {
     mockReelMatchMedia({ hover: false, compact: true });
     const user = userEvent.setup();
     const { container } = render(<Act03Stack />);
     await user.click(screen.getByRole("button", { name: "IndexedDB" }));
     await user.click(screen.getByRole("button", { name: "Fleet Pulse reel" }));
-    expect(reelIn(container, "fleet-pulse")).toHaveAttribute("data-placement", "inline");
+    const inline = reelIn(container, "fleet-pulse");
+    expect(inline).toHaveAttribute("data-placement", "inline");
+    expect(inline?.closest('li[data-project-id="fleet-pulse"]')).not.toBeNull();
   });
 });

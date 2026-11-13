@@ -10,7 +10,7 @@ import {
   type StackToolId,
 } from "../data/profileContent";
 import { ensureGsapPlugins, gsap, prefersReducedMotion } from "../lib/scrollEngine";
-import { BuildReel, preloadReelScene, useReelPointerMode, type ReelAlign } from "./BuildReel";
+import { BuildReel, preloadReelScene, useReelPointerMode } from "./BuildReel";
 
 const REEL_OPEN_DELAY_MS = 140;
 const REEL_CLOSE_DELAY_MS = 160;
@@ -148,6 +148,11 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
       observer?.disconnect();
     };
   }, [openReelId, reelPointerMode, clearReelTimers]);
+
+  // Keep the last hovered build while its scroll furls away
+  const lastReelIdRef = useRef<StackProjectId | null>(null);
+  if (openReelId) lastReelIdRef.current = openReelId;
+  const hungProject = lastReelIdRef.current ? STACK_PROJECTS[lastReelIdRef.current] : null;
 
   const scheduleReelOpen = (projectId: StackProjectId) => {
     clearReelTimers();
@@ -301,10 +306,6 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
       "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[var(--accent-sage)] underline decoration-[#cde0c0]/40 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
     const linkClassSecondary =
       "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[#cfd9d2] underline decoration-[#cfd9d2]/35 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
-    const reelPlacement = inlineMobileBuilds ? "inline" : "overlay";
-    const buildCount = tool.relatedBuilds.length;
-    const reelAlign = (index: number): ReelAlign =>
-      buildCount < 2 || index === 0 ? "start" : index === buildCount - 1 ? "end" : "center";
 
     const renderReelToggle = (projectId: StackProjectId, title: string) => {
       if (reelPointerMode !== "tap") return null;
@@ -360,7 +361,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                 : ""
           }`}
         >
-          {tool.relatedBuilds.map((build, index) => {
+          {tool.relatedBuilds.map((build) => {
             const project = STACK_PROJECTS[build.projectId];
             if (!project) return null;
             const projectId = build.projectId;
@@ -410,13 +411,13 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                   isSingle ? "md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-6" : ""
                 }`}
               >
-                {reel ? (
+                {reel && inlineMobileBuilds ? (
                   <BuildReel
+                    projectId={projectId}
                     reel={reel}
                     title={project.title}
                     open={reelOpen}
-                    placement={reelPlacement}
-                    align={reelAlign(index)}
+                    placement="inline"
                     reduced={reduced}
                   />
                 ) : null}
@@ -507,6 +508,18 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
           : "material-olive relative border-t border-[#f4eee3]/14 px-6 py-24 sm:px-10 lg:px-12 lg:py-32"
       }
     >
+      {/* Desktop: one scroll hung centred from the top of the chapter for the hovered build */}
+      {!inlineMobileBuilds && hungProject?.reel ? (
+        <BuildReel
+          projectId={hungProject.id}
+          reel={hungProject.reel}
+          title={hungProject.title}
+          open={openReelId !== null}
+          placement="hang"
+          reduced={reduced}
+        />
+      ) : null}
+
       <div className="mx-auto w-full max-w-[1360px]">
         {/* Editorial header */}
         <div

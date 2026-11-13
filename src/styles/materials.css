@@ -255,25 +255,35 @@
     position: relative;
   }
 
-  .build-reel--overlay {
+  /* Desktop: hung centred from the top of the chapter, ending near mid-screen */
+  .build-reel--hang {
     position: absolute;
-    bottom: calc(100% - 5px);
-    z-index: 30;
-    width: max(100% + 24px, 26.5rem);
+    top: clamp(48px, 6.5vh, 64px);
+    left: 50%;
+    z-index: 40;
+    width: clamp(400px, 35vw, 520px);
+    translate: -50% 0;
     pointer-events: none;
   }
 
-  .build-reel--overlay[data-align="start"] {
-    left: -12px;
+  .build-reel__cord {
+    position: absolute;
+    bottom: calc(100% - 5px);
+    left: 0;
+    overflow: visible;
+    animation: build-reel-cord 360ms ease-out 80ms backwards;
   }
 
-  .build-reel--overlay[data-align="end"] {
-    right: -12px;
+  .build-reel__cord path {
+    stroke: rgba(234, 222, 198, 0.55);
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
-  .build-reel--overlay[data-align="center"] {
-    left: 50%;
-    translate: -50% 0;
+  .build-reel[data-state="closing"] .build-reel__cord {
+    opacity: 0;
+    transition: opacity 180ms ease-in 240ms;
   }
 
   .build-reel--inline {
@@ -289,9 +299,7 @@
     pointer-events: none;
   }
 
-  .build-reel--overlay[data-render="scene"] {
-    pointer-events: auto;
-  }
+
 
   .build-reel__video {
     position: absolute;
@@ -488,5 +496,11 @@ dialog::backdrop {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes build-reel-cord {
+  from {
+    opacity: 0;
   }
 }

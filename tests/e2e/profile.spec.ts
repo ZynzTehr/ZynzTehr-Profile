@@ -708,18 +708,22 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     expect(await findFontFloorViolations(page, 14)).toEqual([]);
     await assertDomWideE1Invariants(page, "Desktop Act 03 IndexedDB selected");
 
-    // Hovering a shipped build unfurls its reel upward from the card's top edge and plays the mirrored clip
+    // Hovering a shipped build hangs its reel centred from the top of the chapter, ending near mid-screen
     const fleetCard = page.locator('[data-slot="stage-stack-layer"] li[data-project-id="fleet-pulse"]');
     await fleetCard.hover();
-    const fleetReel = fleetCard.locator('[data-slot="build-reel"]');
+    const fleetReel = page.locator('[data-slot="stage-stack-layer"] [data-slot="build-reel"][data-project="fleet-pulse"]');
     await expect(fleetReel).toBeVisible();
-    await page.waitForTimeout(900);
+    await expect(fleetReel).toHaveAttribute("data-placement", "hang");
+    await page.waitForTimeout(1300);
     const reelBox = await fleetReel.boundingBox();
     const fleetBox = await fleetCard.boundingBox();
     expect(reelBox).not.toBeNull();
     expect(fleetBox).not.toBeNull();
-    expect(Math.abs(reelBox!.y + reelBox!.height - fleetBox!.y)).toBeLessThanOrEqual(6);
-    expect(reelBox!.y).toBeGreaterThanOrEqual(72);
+    expect(Math.abs(reelBox!.x + reelBox!.width / 2 - 720)).toBeLessThanOrEqual(2);
+    expect(reelBox!.y).toBeGreaterThanOrEqual(40);
+    expect(reelBox!.y + reelBox!.height).toBeLessThanOrEqual(900 * 0.52);
+    expect(reelBox!.width).toBeLessThanOrEqual(520);
+    expect(reelBox!.y + reelBox!.height).toBeLessThan(fleetBox!.y);
     const reelVideo = fleetReel.locator('video[data-slot="build-reel-video"]');
     const firstTime = await reelVideo.evaluate((v: HTMLVideoElement) => v.currentTime);
     await page.waitForTimeout(500);

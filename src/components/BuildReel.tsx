@@ -5,8 +5,8 @@ import { formatCountdown, REEL_GEOMETRY, reelLayout } from "./reel/reelLayout";
 import type { ReelScene } from "./reel/ReelScene";
 
 export type ReelPointerMode = "hover" | "tap";
-export type ReelPlacement = "overlay" | "inline";
-export type ReelAlign = "start" | "center" | "end";
+/** `hang`: one scroll hung centred from the top of the chapter. `inline`: inside the card (compact layouts). */
+export type ReelPlacement = "hang" | "inline";
 
 const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
 
@@ -46,14 +46,14 @@ export function preloadReelScene(): void {
 }
 
 interface ReelStageProps {
+  projectId: string;
   reel: StackReel;
   title: string;
   placement: ReelPlacement;
-  align: ReelAlign;
   reduced: boolean;
 }
 
-function ReelStage({ reel, title, placement, align, reduced }: ReelStageProps) {
+function ReelStage({ projectId, reel, title, placement, reduced }: ReelStageProps) {
   const [isPresent, safeToRemove] = usePresence();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -155,12 +155,22 @@ function ReelStage({ reel, title, placement, align, reduced }: ReelStageProps) {
       ref={boxRef}
       data-slot="build-reel"
       data-placement={placement}
-      data-align={placement === "overlay" ? align : undefined}
+      data-project={projectId}
+      data-state={isPresent ? "open" : "closing"}
       data-render={mode}
       aria-hidden="true"
       className={`build-reel build-reel--${placement}`}
       style={{ height: layout.height }}
     >
+      {placement === "hang" ? (
+        // Silk hanging cord from the top roller up past the top of the frame
+        <svg className="build-reel__cord" width={layout.width} height={HANG_CORD} viewBox={`0 0 ${layout.width} ${HANG_CORD}`}>
+          <path
+            d={`M ${layout.width * 0.24} ${HANG_CORD} L ${layout.width / 2} 0 L ${layout.width * 0.76} ${HANG_CORD}`}
+            fill="none"
+          />
+        </svg>
+      ) : null}
       {stillOnly ? null : (
         <video
           ref={(el) => {
@@ -237,26 +247,30 @@ function ReelStage({ reel, title, placement, align, reduced }: ReelStageProps) {
   );
 }
 
+/** Cord length above the top roller; the hang offset in CSS keeps its apex out of frame. */
+const HANG_CORD = 64;
+
 export interface BuildReelProps {
+  /** Distinct per build so switching builds furls the old scroll before the next one drops. */
+  projectId: string;
   reel: StackReel;
   title: string;
   open: boolean;
   placement: ReelPlacement;
-  align?: ReelAlign;
   reduced: boolean;
 }
 
 /**
- * A hanging cotton-rag scroll that unfurls upward from the card's top edge and
+ * A hanging cotton-rag scroll that unrolls downward from its top roller and
  * plays the build's mirrored portfolio clip, printed inside a plate mark with a
  * typeset label and countdown. Decorative only: every fact it shows is already
  * in the card, so it stays out of the accessibility tree.
  */
-export function BuildReel({ reel, title, open, placement, align = "start", reduced }: BuildReelProps) {
+export function BuildReel({ projectId, reel, title, open, placement, reduced }: BuildReelProps) {
   return (
-    <AnimatePresence initial={false}>
+    <AnimatePresence initial={false} mode="wait">
       {open ? (
-        <ReelStage key="reel" reel={reel} title={title} placement={placement} align={align} reduced={reduced} />
+        <ReelStage key={projectId} projectId={projectId} reel={reel} title={title} placement={placement} reduced={reduced} />
       ) : null}
     </AnimatePresence>
   );

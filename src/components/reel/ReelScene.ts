@@ -3,7 +3,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { formatCountdown, REEL_GEOMETRY, reelLayout, type ReelLayout } from "./reelLayout";
 
 /**
- * Real-time hanging scroll: a cotton-rag sheet stretched between two ebonized
+ * Real-time hanging scroll: a cotton-rag sheet hung between two ebonized
  * rollers with turned brass finials. The clip is printed inside an intaglio
  * plate mark, the sheet breathes in a slow air current with both rolled edges
  * held by the rollers, and raking light from the upper left (the site's
@@ -457,10 +457,11 @@ export class ReelScene {
   private applyReveal() {
     const layout = this.layout;
     if (!layout) return;
+    // Hung from the top roller; the weighted base roller drops and unwinds the sheet
     const { rollerRadius: r } = REEL_GEOMETRY;
-    const bottomCenterY = layout.height - r;
     const travel = layout.paperHeight;
-    const topCenterY = bottomCenterY - travel * this.reveal;
+    const topCenterY = r;
+    const bottomCenterY = r + travel * this.reveal;
     const cx = this.wx(layout.width / 2);
 
     this.bottomRoller.position.set(cx, this.wy(bottomCenterY), 0);
@@ -470,7 +471,7 @@ export class ReelScene {
     this.topRoller.scale.set(rollerScale, 1, 1);
     this.topRoller.visible = this.bottomRoller.visible = this.rollerIn > 0.01;
 
-    // Paper top edge rides the top roller; the rest is wound on the base roller
+    // Paper hangs from the top roller; the unrevealed rest is wound on the base roller
     this.paper.position.set(cx, this.wy(topCenterY) - layout.paperHeight / 2, 0);
     const u = this.paper.material.uniforms;
     u.uTopY.value = this.wy(topCenterY);

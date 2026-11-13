@@ -1261,12 +1261,16 @@ export function HeroJourneyStage({
             style={{ opacity: showIntroVideo ? 0 : 1 }}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[52%_42%] transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            {mobileVideo ? null : <source src="/media/hero-monarch-loop.webm" type="video/webm" />}
+            {/* H.264 first: hardware-decoded everywhere and Safari never falls to its WebM path */}
             <source
               src={mobileVideo ? "/media/hero-monarch-loop-m.mp4" : "/media/hero-monarch-loop.mp4"}
               type="video/mp4"
-              onError={handleLoopVideoError}
+              // The error handler belongs on the last candidate: the browser only gives up after it
+              onError={mobileVideo ? handleLoopVideoError : undefined}
             />
+            {mobileVideo ? null : (
+              <source src="/media/hero-monarch-loop.webm" type="video/webm" onError={handleLoopVideoError} />
+            )}
           </video>
         ) : null}
 
@@ -1288,12 +1292,16 @@ export function HeroJourneyStage({
             style={{ opacity: 1 }}
             className="pointer-events-none absolute inset-0 h-full w-full bg-[#ddd2c0] object-cover object-[52%_42%] transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            {mobileVideo ? null : <source src="/media/hero-monarch-intro.webm" type="video/webm" />}
+            {/* H.264 first: hardware-decoded everywhere and Safari never falls to its WebM path */}
             <source
               src={mobileVideo ? "/media/hero-monarch-intro-m.mp4" : "/media/hero-monarch-intro.mp4"}
               type="video/mp4"
-              onError={handleIntroVideoError}
+              // The error handler belongs on the last candidate: the browser only gives up after it
+              onError={mobileVideo ? handleIntroVideoError : undefined}
             />
+            {mobileVideo ? null : (
+              <source src="/media/hero-monarch-intro.webm" type="video/webm" onError={handleIntroVideoError} />
+            )}
           </video>
         ) : null}
       </>

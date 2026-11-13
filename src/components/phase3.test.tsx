@@ -393,9 +393,7 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
       const errIntro = cError.querySelector(
         'video[data-slot="hero-intro-video"]',
       ) as HTMLVideoElement;
-      const terminalIntroSource = errIntro.querySelector(
-        'source[type="video/mp4"]',
-      ) as HTMLSourceElement;
+      const terminalIntroSource = errIntro.querySelector("source:last-of-type") as HTMLSourceElement;
       expect(errIntro.style.opacity).toBe("1");
       expect(onIntroStartSpy).not.toHaveBeenCalled();
       fireEvent.error(terminalIntroSource);

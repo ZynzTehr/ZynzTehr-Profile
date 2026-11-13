@@ -520,13 +520,13 @@ export function Act04Portfolio({
                       onError={handlePorchError}
                       className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     >
-                      {mobilePorchVideo ? null : (
-                        <source src="/media/portfolio-porch-loop.webm" type="video/webm" />
-                      )}
                       <source
                         src={mobilePorchVideo ? "/media/portfolio-porch-loop-m.mp4" : "/media/portfolio-porch-loop.mp4"}
                         type="video/mp4"
                       />
+                      {mobilePorchVideo ? null : (
+                        <source src="/media/portfolio-porch-loop.webm" type="video/webm" />
+                      )}
                     </video>
                   ) : null}
 

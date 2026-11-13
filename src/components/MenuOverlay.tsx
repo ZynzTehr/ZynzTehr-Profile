@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, type PanInfo } from "motion/react";
 import {
   CHAPTER_ITEMS,
   CONTACT_EMAIL,
@@ -206,6 +206,7 @@ export function MenuOverlay({
   const reduced = prefersReducedMotion();
   const touchScreen = useTouchScreen();
   const showCloseLabel = closeHovered || touchScreen;
+  const swipeToClose = touchScreen && !reduced;
 
   return (
     <dialog
@@ -229,50 +230,47 @@ export function MenuOverlay({
     >
       <AnimatePresence onExitComplete={finalizeDialogClose}>
         {sheetPresent ? (
+          // Plain container: nothing animates on the sheet's ancestors (an animating
+          // backdrop-filter on the sheet's parent is heavy in Safari and can desync its layers)
           <motion.div
             key="atelier-menu-backdrop"
             data-slot="menu-backdrop"
-            initial={
-              reduced
-                ? false
-                : { opacity: 0, backdropFilter: "blur(0px)" }
-            }
-            animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
-            exit={
-              reduced
-                ? { opacity: 0 }
-                : {
-                    opacity: 0,
-                    backdropFilter: "blur(0px)",
-                    transition: { duration: 0.48, ease: SILK_EASE },
-                  }
-            }
-            transition={
-              reduced
-                ? { duration: 0 }
-                : { duration: 0.62, ease: SILK_EASE }
-            }
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                dismiss();
-              }
-            }}
-            className="flex h-full w-full justify-end overflow-hidden bg-[#140e0b]/72"
+            className="relative flex h-full w-full justify-end overflow-hidden"
           >
+            {/* Tinted, blurred scrim behind the sheet: static blur, only its opacity animates */}
+            <motion.div
+              aria-hidden="true"
+              data-slot="menu-scrim"
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={
+                reduced
+                  ? { opacity: 0 }
+                  : { opacity: 0, transition: { duration: 0.48, ease: SILK_EASE } }
+              }
+              transition={reduced ? { duration: 0 } : { duration: 0.62, ease: SILK_EASE }}
+              onClick={dismiss}
+              className="absolute inset-0 bg-[#140e0b]/72 backdrop-blur-[6px]"
+            />
             <motion.div
               data-slot="menu-sheet"
-              data-swipe={touchScreen && !reduced ? "close" : undefined}
-              // Touch: drag the sheet back toward the right edge to close it
-              drag={touchScreen && !reduced ? "x" : false}
-              dragDirectionLock
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={{ left: 0, right: 0.7 }}
-              dragMomentum={false}
-              onDragEnd={(_, info) => {
-                if (info.offset.x > SWIPE_CLOSE_OFFSET || info.velocity.x > SWIPE_CLOSE_VELOCITY) {
-                  dismiss();
-                }
-              }}
+              data-swipe={swipeToClose ? "close" : undefined}
+              // Touch only: drag the sheet back toward the right edge to close it. On other devices
+              // the drag props are omitted entirely so Motion never measures the sheet for them.
+              {...(swipeToClose
+                ? {
+                    drag: "x" as const,
+                    dragDirectionLock: true,
+                    dragConstraints: { left: 0, right: 0 },
+                    dragElastic: { left: 0, right: 0.7 },
+                    dragMomentum: false,
+                    onDragEnd: (_: unknown, info: PanInfo) => {
+                      if (info.offset.x > SWIPE_CLOSE_OFFSET || info.velocity.x > SWIPE_CLOSE_VELOCITY) {
+                        dismiss();
+                      }
+                    },
+                  }
+                : {})}
               initial={reduced ? false : { x: "100%", opacity: 0 }}
               animate={{ x: "0%", opacity: 1 }}
               exit={
@@ -295,7 +293,7 @@ export function MenuOverlay({
                       opacity: { duration: 0.46, ease: SILK_EASE },
                     }
               }
-              className="material-espresso relative flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto overscroll-contain border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
+              className="material-espresso relative z-10 flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto overscroll-contain border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
             >
               {touchScreen ? (
                 <span
@@ -326,7 +324,11 @@ export function MenuOverlay({
                   </h2>
                 </div>
 
-                <motion.button
+                {/* Fixed 96x48 box: the arrow and "Close" crossfade inside it. The button opens right
+                    under the cursor (where Menu was); Safari fires hover for an element appearing under
+                    a still pointer, and the old `layout` resize then looped hover on/off and made Motion
+                    re-project the whole sheet: the menu "jumped" on every open. */}
+                <button
                   ref={closeButtonRef}
                   type="button"
                   data-slot="menu-close-button"
@@ -334,44 +336,36 @@ export function MenuOverlay({
                   onClick={dismiss}
                   onPointerEnter={() => setCloseHovered(true)}
                   onPointerLeave={() => setCloseHovered(false)}
-                  layout={!reduced}
-                  transition={
-                    reduced
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 280, damping: 28, mass: 0.85 }
-                  }
-                  className="editorial-btn-sheen relative inline-flex min-h-12 min-w-12 items-center justify-center gap-1.5 overflow-hidden border border-[#f4eee3]/28 px-3.5 font-utility text-[14px] font-medium tracking-[0.05em] text-[var(--ink-cream)] transition-[color,background-color,border-color,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#f4eee3]/55 hover:bg-[#f4eee3]/10 active:scale-[0.96] active:bg-[#f4eee3]/14"
+                  className="editorial-btn-sheen relative inline-flex h-12 w-24 shrink-0 items-center justify-center overflow-hidden border border-[#f4eee3]/28 font-utility text-[14px] font-medium tracking-[0.05em] text-[var(--ink-cream)] transition-[color,background-color,border-color,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#f4eee3]/55 hover:bg-[#f4eee3]/10 active:scale-[0.96] active:bg-[#f4eee3]/14"
                 >
-                  {touchScreen ? (
-                    <svg
-                      aria-hidden="true"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.9"
-                      strokeLinecap="round"
-                    >
-                      <path d="M6 6L18 18" />
-                      <path d="M18 6L6 18" />
-                    </svg>
-                  ) : null}
-                  <AnimatePresence mode="popLayout" initial={false}>
+                  <AnimatePresence initial={false}>
                     {showCloseLabel ? (
                       <motion.span
                         key="close-label"
                         data-slot="menu-close-text"
-                        initial={reduced ? false : { opacity: 0, x: -8, scale: 0.92 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        exit={reduced ? { opacity: 0 } : { opacity: 0, x: -7, scale: 0.92 }}
+                        initial={reduced ? false : { opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={reduced ? { opacity: 0 } : { opacity: 0, x: -6 }}
                         transition={
-                          reduced
-                            ? { duration: 0 }
-                            : { duration: 0.34, ease: [0.22, 1, 0.36, 1] }
+                          reduced ? { duration: 0 } : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
                         }
-                        className="inline-block px-1"
+                        className="absolute inset-0 flex items-center justify-center gap-1.5"
                       >
+                        {touchScreen ? (
+                          <svg
+                            aria-hidden="true"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.9"
+                            strokeLinecap="round"
+                          >
+                            <path d="M6 6L18 18" />
+                            <path d="M18 6L6 18" />
+                          </svg>
+                        ) : null}
                         Close
                       </motion.span>
                     ) : (
@@ -379,15 +373,13 @@ export function MenuOverlay({
                         key="close-arrow"
                         data-slot="menu-close-arrow"
                         aria-hidden="true"
-                        initial={reduced ? false : { opacity: 0, x: -8, scale: 0.88 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        exit={reduced ? { opacity: 0 } : { opacity: 0, x: 7, scaleX: 0.65 }}
+                        initial={reduced ? false : { opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={reduced ? { opacity: 0 } : { opacity: 0, x: 6 }}
                         transition={
-                          reduced
-                            ? { duration: 0 }
-                            : { duration: 0.34, ease: [0.22, 1, 0.36, 1] }
+                          reduced ? { duration: 0 } : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
                         }
-                        className="inline-flex items-center justify-center"
+                        className="absolute inset-0 flex items-center justify-center"
                       >
                         <svg
                           width="18"
@@ -405,7 +397,7 @@ export function MenuOverlay({
                       </motion.span>
                     )}
                   </AnimatePresence>
-                </motion.button>
+                </button>
               </motion.div>
 
               <nav aria-label="Folio chapters" className="my-8">

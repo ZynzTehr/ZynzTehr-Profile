@@ -4,9 +4,13 @@ import { describe, expect, it } from "vitest";
 import {
   assembleStackBuilds,
   buildAutoUsageNote,
+  buildReelEntry,
   detectRepoTools,
   formatRepoTitle,
+  gitBlobSha,
   normalizeLiveHref,
+  reelKey,
+  resolveReelSource,
 } from "../../scripts/sync-stack-builds.mjs";
 import stackBuildsData from "./stackBuilds.json";
 import {
@@ -254,6 +258,78 @@ describe("profileContent invariants", () => {
       "job-seance",
     ]);
     expect(assembled.projects["freight-copilot"]?.href).toBe("https://freight-copilot.vercel.app/");
+  });
+
+  it("resolves each build reel from a local capture, then the repo root, then a borrowed clip, with content-keyed paths", () => {
+    const tree = (entries: Record<string, string>) => ({ branch: "main", shas: new Map(Object.entries(entries)) });
+    const repoTrees = new Map([
+      ["fleet-pulse", tree({ "portfolio.mp4": "aaa", "portfolio.webp": "bbb", "src/index.ts": "zzz" })],
+      ["vscode-fx", tree({ "portfolio.webp": "ccc" })],
+      ["ZynzTehr-Profile", tree({ "package.json": "ddd" })],
+      [
+        "ZynzTehr-Portfolio",
+        tree({
+          "client/public/media/vscode-fx/portfolio.mp4": "eee",
+          "client/public/media/vscode-fx/portfolio.webp": "fff",
+        }),
+      ],
+    ]);
+
+    const own = resolveReelSource({ projectId: "fleet-pulse", repoName: "fleet-pulse", repoTrees });
+    expect(own?.source).toBe("repo");
+    expect(own?.video).toMatchObject({ kind: "remote", repoName: "fleet-pulse", path: "portfolio.mp4", sha: "aaa" });
+    expect(own?.poster?.sha).toBe("bbb");
+
+    // A root still without a clip falls through to the clip borrowed from the 3D portfolio repo
+    const borrowed = resolveReelSource({ projectId: "vscode-fx", repoName: "vscode-fx", repoTrees });
+    expect(borrowed?.source).toBe("borrowed");
+    expect(borrowed?.video).toMatchObject({
+      repoName: "ZynzTehr-Portfolio",
+      path: "client/public/media/vscode-fx/portfolio.mp4",
+    });
+
+    // A committed local capture wins over everything else
+    const localFiles = { video: { path: "/tmp/portfolio.mp4", sha: "111" }, poster: null };
+    const local = resolveReelSource({ projectId: "fleet-pulse", repoName: "fleet-pulse", repoTrees, localFiles });
+    expect(local?.source).toBe("local");
+    expect(local?.poster).toBeNull();
+
+    expect(resolveReelSource({ projectId: "atelier-folio", repoName: "ZynzTehr-Profile", repoTrees })).toBeNull();
+    expect(buildReelEntry("atelier-folio", null)).toBeNull();
+
+    const key = reelKey(own!);
+    expect(key).toMatch(/^[0-9a-f]{10}$/);
+    expect(reelKey(own!)).toBe(key);
+    expect(reelKey(own!, "r-next")).not.toBe(key);
+    expect(reelKey({ ...own!, video: { ...own!.video, sha: "changed" } })).not.toBe(key);
+    expect(buildReelEntry("fleet-pulse", own)).toEqual({
+      video: `/media/builds/fleet-pulse/reel-${key}.mp4`,
+      poster: `/media/builds/fleet-pulse/reel-${key}.webp`,
+      source: "repo",
+    });
+
+    // Same identity git uses, so local captures and remote blobs compare alike
+    expect(gitBlobSha("hello\n")).toBe("ce013625030ba8dba906f756967f9e9ca394464a");
+  });
+
+  it("ships every referenced reel file under public/media/builds and leaves no orphans", () => {
+    const publicDir = path.resolve(import.meta.dirname, "../../public");
+    const reelDir = path.join(publicDir, "media/builds");
+    const referenced = new Set<string>();
+    for (const project of Object.values(stackBuildsData.projects)) {
+      if (!project.reel) continue;
+      for (const publicPath of [project.reel.video, project.reel.poster]) {
+        expect(publicPath.startsWith(`/media/builds/${project.id}/reel-`)).toBe(true);
+        const diskPath = path.join(publicDir, publicPath);
+        expect(fs.existsSync(diskPath), publicPath).toBe(true);
+        referenced.add(diskPath);
+      }
+    }
+    const onDisk = fs
+      .readdirSync(reelDir, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => path.join(entry.parentPath, entry.name));
+    expect(onDisk.filter((file) => !referenced.has(file))).toEqual([]);
   });
 
   it("keeps README.md aligned with hero typing SVG, profile views badge, PAISE program, forward vision, discipline-grouped badges, GitHub widgets, and 6 engineering sections without emojis or dead links", () => {

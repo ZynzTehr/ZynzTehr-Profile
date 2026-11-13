@@ -30,18 +30,25 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Sync stack builds from GitHub repositories
+      - name: Install reel encoders (ffmpeg, cwebp)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg webp
+
+      - name: Sync stack builds and reels from GitHub repositories
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
         run: npm run sync:builds
 
-      - name: Check whether stackBuilds.json changed
+      - name: Check whether stackBuilds.json or reels changed
         id: diff
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- src/data/stackBuilds.json; then
+          # git status (not git diff) so newly mirrored, untracked reel files count
+          if [ -z "$(git status --porcelain -- src/data/stackBuilds.json public/media/builds)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -59,14 +66,14 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         run: npm run build
 
-      - name: Commit and push updated stackBuilds.json
+      - name: Commit and push updated stackBuilds.json and reels
         if: steps.diff.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/stackBuilds.json
-          git commit -m "Sync related stack builds from GitHub"
+          git add -A -- src/data/stackBuilds.json public/media/builds
+          git commit -m "Sync related stack builds and reels from GitHub"
           git pull --rebase origin main
           git push origin HEAD:main

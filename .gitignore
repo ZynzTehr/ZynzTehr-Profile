@@ -60,6 +60,8 @@ yarn-error.log*
 /AGENTS.md
 /.agents/
 /.scratch/
-/assets-raw/
+/assets-raw/*
+# Reel capture sources the weekly sync normalizes into public/media/builds
+!/assets-raw/builds/
 /CONTEXT.md
 /DESIGN.md

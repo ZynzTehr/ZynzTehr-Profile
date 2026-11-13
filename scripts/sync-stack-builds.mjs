@@ -1,13 +1,47 @@
 #!/usr/bin/env node
 
+import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
+const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_OUTPUT_PATH = path.resolve(__dirname, "../src/data/stackBuilds.json");
+const DEFAULT_REEL_OUTPUT_DIR = path.resolve(__dirname, "../public/media/builds");
+const DEFAULT_LOCAL_REEL_DIR = path.resolve(__dirname, "../assets-raw/builds");
 const REQUEST_TIMEOUT_MS = 15_000;
+const MEDIA_TIMEOUT_MS = 60_000;
 const MAX_BUILDS_PER_TOOL = 3;
+
+/**
+ * Reel encode recipe. Bumping the version re-keys every mirrored file, which
+ * forces a fresh encode on the next sync and keeps immutable caching honest.
+ */
+export const REEL_RECIPE = Object.freeze({
+  version: "r2",
+  width: 960,
+  height: 600,
+  maxSeconds: 12,
+  fps: 30,
+  crf: 26,
+  posterQuality: 78,
+});
+export const REEL_PUBLIC_PREFIX = "/media/builds";
+const REEL_VIDEO_FILE = "portfolio.mp4";
+const REEL_POSTER_FILE = "portfolio.webp";
+
+/**
+ * Projects whose repositories ship no root clip but whose clip already lives in
+ * the 3D portfolio repository (mirrors `REPO_MEDIA_OVERRIDES` in its sync script).
+ */
+export const BORROWED_REEL_MEDIA = {
+  "vscode-fx": { repoName: "ZynzTehr-Portfolio", dir: "client/public/media/vscode-fx" },
+  "atelier-folio": { repoName: "ZynzTehr-Portfolio", dir: "client/public/media/zynztehr-profile" },
+};
 
 export const STACK_TOOL_LABELS = {
   typescript: "TypeScript",
@@ -510,6 +544,7 @@ export function assembleStackBuilds(repoRecords) {
       title: record.title,
       href: record.href,
       sourceHref: record.sourceHref,
+      reel: record.reel ?? null,
     });
   }
 
@@ -560,6 +595,244 @@ export function assembleStackBuilds(repoRecords) {
   return { projects, toolBuilds };
 }
 
+/** Git blob sha (`git hash-object`) so local and remote sources share one identity. */
+export function gitBlobSha(bytes) {
+  const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  return createHash("sha1")
+    .update(`blob ${buffer.length}\0`)
+    .update(buffer)
+    .digest("hex");
+}
+
+/**
+ * Picks the clip and still for a project. Precedence: a capture committed under
+ * `assets-raw/builds/<id>/`, then the project's own repo root, then a clip
+ * borrowed from another repo's tree. Returns null when no clip exists anywhere.
+ *
+ * `repoTrees` maps repoName -> { branch, shas: Map<path, blobSha> }.
+ */
+export function resolveReelSource({ projectId, repoName, repoTrees, localFiles = null }) {
+  if (localFiles?.video) {
+    return {
+      source: "local",
+      video: { kind: "local", path: localFiles.video.path, sha: localFiles.video.sha },
+      poster: localFiles.poster
+        ? { kind: "local", path: localFiles.poster.path, sha: localFiles.poster.sha }
+        : null,
+    };
+  }
+
+  const fromTree = (tree, treeRepoName, dir) => {
+    if (!tree) return null;
+    const prefix = dir ? `${dir}/` : "";
+    const videoSha = tree.shas.get(`${prefix}${REEL_VIDEO_FILE}`);
+    if (!videoSha) return null;
+    const posterSha = tree.shas.get(`${prefix}${REEL_POSTER_FILE}`);
+    const remote = (file, sha) => ({
+      kind: "remote",
+      repoName: treeRepoName,
+      branch: tree.branch,
+      path: `${prefix}${file}`,
+      sha,
+    });
+    return {
+      video: remote(REEL_VIDEO_FILE, videoSha),
+      poster: posterSha ? remote(REEL_POSTER_FILE, posterSha) : null,
+    };
+  };
+
+  const own = fromTree(repoTrees.get(repoName), repoName, "");
+  if (own) return { source: "repo", ...own };
+
+  const borrowed = BORROWED_REEL_MEDIA[projectId];
+  if (borrowed) {
+    const found = fromTree(repoTrees.get(borrowed.repoName), borrowed.repoName, borrowed.dir);
+    if (found) return { source: "borrowed", ...found };
+  }
+
+  return null;
+}
+
+export function reelKey(resolved, recipeVersion = REEL_RECIPE.version) {
+  return createHash("sha1")
+    .update(`${resolved.video.sha}:${resolved.poster?.sha ?? "frame0"}:${recipeVersion}`)
+    .digest("hex")
+    .slice(0, 10);
+}
+
+/** Public payload entry for a resolved reel (deterministic; no encoding needed). */
+export function buildReelEntry(projectId, resolved) {
+  if (!resolved) return null;
+  const key = reelKey(resolved);
+  const base = `${REEL_PUBLIC_PREFIX}/${projectId}/reel-${key}`;
+  return { video: `${base}.mp4`, poster: `${base}.webp`, source: resolved.source };
+}
+
+async function readLocalReelFiles(localDir, projectId) {
+  const dir = path.join(localDir, projectId);
+  const read = async (file) => {
+    const filePath = path.join(dir, file);
+    try {
+      const bytes = await fs.readFile(filePath);
+      return { path: filePath, sha: gitBlobSha(bytes) };
+    } catch (error) {
+      if (error && error.code === "ENOENT") return null;
+      throw error;
+    }
+  };
+  const video = await read(REEL_VIDEO_FILE);
+  if (!video) return null;
+  return { video, poster: await read(REEL_POSTER_FILE) };
+}
+
+async function runTool(command, args, label) {
+  try {
+    await execFileAsync(command, args, { maxBuffer: 16 * 1024 * 1024 });
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      throw new Error(
+        `${label} needs \`${command}\` on PATH (macOS: brew install ffmpeg webp; Ubuntu: apt-get install ffmpeg webp).`,
+      );
+    }
+    const stderr = error && typeof error.stderr === "string" ? error.stderr.trim().split("\n").slice(-4).join(" | ") : "";
+    throw new Error(`${label} failed: ${stderr || (error instanceof Error ? error.message : String(error))}`);
+  }
+}
+
+async function loadReelAsset(asset, owner, token) {
+  if (asset.kind === "local") return fs.readFile(asset.path);
+  const bytes = await fetchRawFile(owner, asset.repoName, asset.branch, asset.path, token, {
+    binary: true,
+    timeoutMs: MEDIA_TIMEOUT_MS,
+  });
+  if (!bytes) {
+    throw new Error(`Could not download ${asset.repoName}/${asset.path} for reel mirroring.`);
+  }
+  return bytes;
+}
+
+async function encodeReel({ projectId, resolved, videoOut, posterOut, owner, token }) {
+  const { width, height, maxSeconds, fps, crf, posterQuality } = REEL_RECIPE;
+  const frameFilter = `scale=${width}:${height}:force_original_aspect_ratio=increase:out_range=tv,crop=${width}:${height}`;
+  const workDir = await fs.mkdtemp(path.join(os.tmpdir(), `reel-${projectId}-`));
+  try {
+    const srcVideo = path.join(workDir, "source.mp4");
+    await fs.writeFile(srcVideo, await loadReelAsset(resolved.video, owner, token));
+
+    const tmpVideo = path.join(workDir, "reel.mp4");
+    await runTool(
+      "ffmpeg",
+      [
+        "-hide_banner", "-loglevel", "error", "-y",
+        "-i", srcVideo,
+        "-t", String(maxSeconds),
+        "-an",
+        "-vf", `${frameFilter},fps=${fps}`,
+        "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-color_range", "tv",
+        "-crf", String(crf), "-preset", "slow",
+        "-movflags", "+faststart",
+        tmpVideo,
+      ],
+      `Encoding ${projectId} reel`,
+    );
+
+    let posterInput = tmpVideo;
+    if (resolved.poster) {
+      posterInput = path.join(workDir, "still.webp");
+      await fs.writeFile(posterInput, await loadReelAsset(resolved.poster, owner, token));
+    }
+    const posterPng = path.join(workDir, "poster.png");
+    await runTool(
+      "ffmpeg",
+      ["-hide_banner", "-loglevel", "error", "-y", "-i", posterInput, "-frames:v", "1", "-vf", frameFilter, posterPng],
+      `Framing ${projectId} poster`,
+    );
+    const tmpPoster = path.join(workDir, "poster.webp");
+    await runTool(
+      "cwebp",
+      ["-quiet", "-q", String(posterQuality), "-m", "6", posterPng, "-o", tmpPoster],
+      `Encoding ${projectId} poster`,
+    );
+
+    await fs.mkdir(path.dirname(videoOut), { recursive: true });
+    await fs.copyFile(tmpVideo, videoOut);
+    await fs.copyFile(tmpPoster, posterOut);
+  } finally {
+    await fs.rm(workDir, { recursive: true, force: true });
+  }
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function listFilesRecursive(dir) {
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if (error && error.code === "ENOENT") return [];
+    throw error;
+  }
+  const nested = await Promise.all(
+    entries.map((entry) => {
+      const full = path.join(dir, entry.name);
+      return entry.isDirectory() ? listFilesRecursive(full) : [full];
+    }),
+  );
+  return nested.flat();
+}
+
+/**
+ * Encodes any reel whose content-keyed files are missing, then removes files in
+ * the reel directory that the payload no longer references. Idempotent: a second
+ * run with unchanged sources touches nothing.
+ */
+export async function mirrorReels({ projects, resolvedById, reelOutputDir, owner, token }) {
+  const referenced = new Set();
+  let encoded = 0;
+
+  for (const [projectId, project] of Object.entries(projects)) {
+    if (!project.reel) continue;
+    const toDisk = (publicPath) =>
+      path.join(reelOutputDir, publicPath.slice(REEL_PUBLIC_PREFIX.length + 1));
+    const videoOut = toDisk(project.reel.video);
+    const posterOut = toDisk(project.reel.poster);
+    referenced.add(videoOut);
+    referenced.add(posterOut);
+
+    if ((await fileExists(videoOut)) && (await fileExists(posterOut))) continue;
+    await encodeReel({
+      projectId,
+      resolved: resolvedById.get(projectId),
+      videoOut,
+      posterOut,
+      owner,
+      token,
+    });
+    encoded += 1;
+  }
+
+  let pruned = 0;
+  for (const filePath of await listFilesRecursive(reelOutputDir)) {
+    if (referenced.has(filePath)) continue;
+    await fs.rm(filePath, { force: true });
+    pruned += 1;
+  }
+  for (const entry of await fs.readdir(reelOutputDir, { withFileTypes: true }).catch(() => [])) {
+    if (!entry.isDirectory()) continue;
+    const dir = path.join(reelOutputDir, entry.name);
+    if ((await fs.readdir(dir)).length === 0) await fs.rmdir(dir);
+  }
+
+  return { encoded, pruned };
+}
+
 function buildGithubHeaders(token, accept = "application/vnd.github+json") {
   const headers = {
     Accept: accept,
@@ -583,7 +856,7 @@ async function fetchJson(url, token) {
   return response.json();
 }
 
-async function fetchRawFile(owner, repoName, defaultBranch, filePath, token) {
+async function fetchRawFile(owner, repoName, defaultBranch, filePath, token, options = {}) {
   const encodedPath = filePath
     .split("/")
     .map((segment) => encodeURIComponent(segment))
@@ -597,9 +870,10 @@ async function fetchRawFile(owner, repoName, defaultBranch, filePath, token) {
   }
   const response = await fetch(rawUrl, {
     headers,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
   });
   if (!response.ok) return null;
+  if (options.binary) return Buffer.from(await response.arrayBuffer());
   return response.text();
 }
 
@@ -643,7 +917,7 @@ function selectSignalTextPaths(treePaths) {
     .slice(0, 6);
 }
 
-async function inspectEligibleRepo(owner, repo, token) {
+async function inspectEligibleRepo(owner, repo, token, repoTrees) {
   const curated = CURATED_REPO_METADATA[repo.name] ?? null;
   const liveHref = normalizeLiveHref(repo.homepage, curated?.fallbackHref);
   if (!liveHref) return null;
@@ -653,11 +927,16 @@ async function inspectEligibleRepo(owner, repo, token) {
     repo.name,
   )}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
   const treePayload = await fetchJson(treeUrl, token);
-  const treePaths = Array.isArray(treePayload.tree)
-    ? treePayload.tree
-        .filter((entry) => entry && entry.type === "blob" && typeof entry.path === "string")
-        .map((entry) => entry.path)
+  const blobs = Array.isArray(treePayload.tree)
+    ? treePayload.tree.filter(
+        (entry) => entry && entry.type === "blob" && typeof entry.path === "string",
+      )
     : [];
+  const treePaths = blobs.map((entry) => entry.path);
+  repoTrees.set(repo.name, {
+    branch,
+    shas: new Map(blobs.map((entry) => [entry.path, String(entry.sha || "")])),
+  });
 
   const pkgPaths = selectPackageJsonPaths(treePaths);
   const signalPaths = selectSignalTextPaths(treePaths);
@@ -751,6 +1030,8 @@ export async function runSync(options = {}) {
   const owner = options.owner || process.env.GITHUB_OWNER || "ZynzTehr";
   const token = options.token ?? process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? "";
   const outputPath = options.outputPath || DEFAULT_OUTPUT_PATH;
+  const reelOutputDir = options.reelOutputDir || DEFAULT_REEL_OUTPUT_DIR;
+  const localReelDir = options.localReelDir || DEFAULT_LOCAL_REEL_DIR;
   const checkOnly = Boolean(options.checkOnly);
   const dryRun = Boolean(options.dryRun);
 
@@ -765,11 +1046,25 @@ export async function runSync(options = {}) {
   );
 
   const inspected = [];
+  const repoTrees = new Map();
   for (const repo of candidates) {
-    const record = await inspectEligibleRepo(owner, repo, token);
+    const record = await inspectEligibleRepo(owner, repo, token, repoTrees);
     if (record) {
       inspected.push(record);
     }
+  }
+
+  // Second pass: every tree is known now, so borrowed clips can resolve too.
+  const resolvedById = new Map();
+  for (const record of inspected) {
+    const resolved = resolveReelSource({
+      projectId: record.id,
+      repoName: record.repoName,
+      repoTrees,
+      localFiles: await readLocalReelFiles(localReelDir, record.id),
+    });
+    if (resolved) resolvedById.set(record.id, resolved);
+    record.reel = buildReelEntry(record.id, resolved);
   }
 
   const payload = assembleStackBuilds(inspected);
@@ -793,7 +1088,23 @@ export async function runSync(options = {}) {
     if (changed) {
       throw new Error(`${path.relative(process.cwd(), outputPath)} is out of sync with GitHub.`);
     }
-    return { changed: false, projectCount: Object.keys(payload.projects).length };
+    return {
+      changed: false,
+      projectCount: Object.keys(payload.projects).length,
+      reelCount: Object.values(payload.projects).filter((project) => project.reel).length,
+    };
+  }
+
+  let reels = { encoded: 0, pruned: 0 };
+  if (!dryRun) {
+    // Mirror media before writing JSON so the payload never points at missing files.
+    reels = await mirrorReels({
+      projects: payload.projects,
+      resolvedById,
+      reelOutputDir,
+      owner,
+      token,
+    });
   }
 
   if (!dryRun && changed) {
@@ -804,6 +1115,8 @@ export async function runSync(options = {}) {
   return {
     changed,
     projectCount: Object.keys(payload.projects).length,
+    reelCount: Object.values(payload.projects).filter((project) => project.reel).length,
+    reels,
     payload,
   };
 }
@@ -823,8 +1136,13 @@ if (isDirectExecution) {
         ? "updated"
         : "already up to date";
     console.log(
-      `[sync-stack-builds] ${status} (${result.projectCount} shipped projects across ${STACK_TOOL_IDS.length} tools).`,
+      `[sync-stack-builds] ${status} (${result.projectCount} shipped projects across ${STACK_TOOL_IDS.length} tools, ${result.reelCount ?? 0} reels).`,
     );
+    if (result.reels && (result.reels.encoded || result.reels.pruned)) {
+      console.log(
+        `[sync-stack-builds] reels: ${result.reels.encoded} encoded, ${result.reels.pruned} stale files pruned.`,
+      );
+    }
   } catch (error) {
     console.error(
       `[sync-stack-builds] ${error instanceof Error ? error.message : String(error)}`,

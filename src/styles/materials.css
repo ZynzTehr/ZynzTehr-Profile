@@ -250,18 +250,73 @@
     animation: atelier-plumb-arrow-morph 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
 
+  /* Act 03 selected-builds sheet: raised cotton-rag on the olive ground */
+  .build-sheet {
+    color: var(--ink-espresso);
+    background-color: var(--surface-rag);
+    background-image:
+      linear-gradient(180deg, rgba(255, 253, 249, 0.74) 0%, rgba(244, 236, 222, 0.4) 100%),
+      url("/media/paper-grain.webp");
+    background-size: auto, 192px 192px;
+    background-blend-mode: normal, soft-light;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.85) inset,
+      0 30px 56px -26px rgba(5, 9, 7, 0.9),
+      0 4px 10px rgba(5, 9, 7, 0.35);
+  }
+
+  .build-sheet__rule {
+    display: block;
+    height: 2px;
+    margin-bottom: 8px;
+    background: var(--accent-monarch);
+    transform-origin: left center;
+    animation: build-sheet-rule 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .build-sheet__entry:hover,
+  .build-sheet__entry.is-screening {
+    background-color: rgba(166, 64, 40, 0.055);
+  }
+
+  /* Hangs in the entry's left margin so the title stays aligned with its text */
+  .build-sheet__marker {
+    position: absolute;
+    top: 50%;
+    left: -11px;
+    margin-top: -3px;
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent-monarch);
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+      opacity 260ms ease-out,
+      transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .build-sheet__entry.is-screening .build-sheet__marker {
+    opacity: 1;
+    transform: none;
+  }
+
   /* Act 03 build reel: rendered hanging scroll (see src/components/reel/ReelScene.ts) */
   .build-reel {
     position: relative;
   }
 
   /* Desktop: hung centred from the top of the chapter, ending near mid-screen */
+  /* Desktop: hung centred from a brass pin near the top of the chapter. Width grows to
+     620 px but is capped so the scroll ends by ~60% of the viewport height
+     (height ≈ 0.625 × (width − 74px) + 90px; see reel/reelLayout.ts). */
   .build-reel--hang {
     position: absolute;
-    top: clamp(48px, 6.5vh, 64px);
+    top: 104px;
     left: 50%;
     z-index: 40;
-    width: clamp(400px, 35vw, 520px);
+    width: clamp(420px, min(42vw, calc((60vh - 104px - 90px) / 0.625 + 74px)), 620px);
     translate: -50% 0;
     pointer-events: none;
   }
@@ -275,10 +330,14 @@
   }
 
   .build-reel__cord path {
-    stroke: rgba(234, 222, 198, 0.55);
-    stroke-width: 1;
+    stroke: rgba(236, 225, 202, 0.72);
+    stroke-width: 1.25;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .build-reel__pin-shadow {
+    fill: rgba(5, 9, 7, 0.45);
   }
 
   .build-reel[data-state="closing"] .build-reel__cord {
@@ -502,5 +561,11 @@ dialog::backdrop {
 @keyframes build-reel-cord {
   from {
     opacity: 0;
+  }
+}
+
+@keyframes build-sheet-rule {
+  from {
+    transform: scaleX(0);
   }
 }

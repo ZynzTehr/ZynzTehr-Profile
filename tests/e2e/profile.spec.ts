@@ -721,8 +721,9 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     expect(fleetBox).not.toBeNull();
     expect(Math.abs(reelBox!.x + reelBox!.width / 2 - 720)).toBeLessThanOrEqual(2);
     expect(reelBox!.y).toBeGreaterThanOrEqual(40);
-    expect(reelBox!.y + reelBox!.height).toBeLessThanOrEqual(900 * 0.52);
-    expect(reelBox!.width).toBeLessThanOrEqual(520);
+    expect(reelBox!.y + reelBox!.height).toBeLessThanOrEqual(900 * 0.6);
+    expect(reelBox!.width).toBeLessThanOrEqual(620);
+    expect(reelBox!.width).toBeGreaterThanOrEqual(560);
     expect(reelBox!.y + reelBox!.height).toBeLessThan(fleetBox!.y);
     const reelVideo = fleetReel.locator('video[data-slot="build-reel-video"]');
     const firstTime = await reelVideo.evaluate((v: HTMLVideoElement) => v.currentTime);

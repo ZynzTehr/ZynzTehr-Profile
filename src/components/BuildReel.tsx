@@ -163,12 +163,27 @@ function ReelStage({ projectId, reel, title, placement, reduced }: ReelStageProp
       style={{ height: layout.height }}
     >
       {placement === "hang" ? (
-        // Silk hanging cord from the top roller up past the top of the frame
-        <svg className="build-reel__cord" width={layout.width} height={HANG_CORD} viewBox={`0 0 ${layout.width} ${HANG_CORD}`}>
+        // Silk hanging cord from the top roller to a brass picture pin
+        <svg
+          className="build-reel__cord"
+          width={layout.width}
+          height={HANG_CORD}
+          viewBox={`0 0 ${layout.width} ${HANG_CORD}`}
+        >
+          <defs>
+            <radialGradient id={`reel-pin-${projectId}`} cx="38%" cy="32%" r="70%">
+              <stop offset="0" stopColor="#f4e3b8" />
+              <stop offset="0.45" stopColor="#b48a4c" />
+              <stop offset="1" stopColor="#5a4220" />
+            </radialGradient>
+          </defs>
           <path
-            d={`M ${layout.width * 0.24} ${HANG_CORD} L ${layout.width / 2} 0 L ${layout.width * 0.76} ${HANG_CORD}`}
+            d={`M ${layout.width * 0.22} ${HANG_CORD} L ${layout.width / 2} ${PIN_Y} L ${layout.width * 0.78} ${HANG_CORD}`}
             fill="none"
           />
+          <circle className="build-reel__pin-shadow" cx={layout.width / 2 + 1.2} cy={PIN_Y + 2} r={4.6} />
+          <circle cx={layout.width / 2} cy={PIN_Y} r={4.4} fill={`url(#reel-pin-${projectId})`} />
+          <circle cx={layout.width / 2} cy={PIN_Y} r={1.3} fill="#3e2d15" opacity={0.55} />
         </svg>
       ) : null}
       {stillOnly ? null : (
@@ -247,8 +262,9 @@ function ReelStage({ projectId, reel, title, placement, reduced }: ReelStageProp
   );
 }
 
-/** Cord length above the top roller; the hang offset in CSS keeps its apex out of frame. */
-const HANG_CORD = 64;
+/** Cord drop from the brass pin to the top roller (the CSS hang offset keeps the pin in frame). */
+const HANG_CORD = 76;
+const PIN_Y = 6;
 
 export interface BuildReelProps {
   /** Distinct per build so switching builds furls the old scroll before the next one drops. */

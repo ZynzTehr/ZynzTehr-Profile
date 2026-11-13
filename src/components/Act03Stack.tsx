@@ -302,10 +302,14 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
 
   const renderSelectedBuilds = (tool: StackTool) => {
     const isSingle = tool.relatedBuilds.length === 1;
+    // Ink on the raised rag sheet: terracotta for the live build, espresso for source
     const linkClassPrimary =
-      "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[var(--accent-sage)] underline decoration-[#cde0c0]/40 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
+      "inline-flex min-h-11 items-center font-utility text-[14px] font-semibold text-[var(--accent-monarch)] underline decoration-[#a64028]/35 underline-offset-4 transition-colors hover:text-[var(--accent-monarch-deep)] hover:decoration-[var(--accent-monarch-deep)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-monarch)] lg:min-h-6";
     const linkClassSecondary =
-      "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[#cfd9d2] underline decoration-[#cfd9d2]/35 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
+      "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[var(--ink-muted-dark)] underline decoration-[#5b4a3e]/30 underline-offset-4 transition-colors hover:text-[var(--ink-espresso)] hover:decoration-[var(--ink-espresso)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-monarch)] lg:min-h-6";
+    const anyReel = tool.relatedBuilds.some((build) => STACK_PROJECTS[build.projectId]?.reel);
+    const reelInvitation =
+      reelPointerMode === "hover" ? "Hover a build to screen its reel" : "Tap Reel to screen a build";
 
     const renderReelToggle = (projectId: StackProjectId, title: string) => {
       if (reelPointerMode !== "tap") return null;
@@ -317,8 +321,8 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
           aria-pressed={isOpen}
           aria-label={`${title} reel`}
           onClick={() => setOpenReelId((prev) => (prev === projectId ? null : projectId))}
-          className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 font-utility text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] ${
-            isOpen ? "text-[var(--ink-cream)]" : "text-[var(--accent-sage)]"
+          className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 font-utility text-[14px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-monarch)] ${
+            isOpen ? "text-[var(--ink-espresso)]" : "text-[var(--accent-monarch)]"
           }`}
         >
           <span
@@ -339,25 +343,33 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
         animate={{ opacity: 1, y: 0 }}
         transition={reduced ? { duration: 0 } : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
+        <span aria-hidden="true" className="build-sheet__rule" />
         <div
-          className={`flex flex-wrap items-baseline justify-between gap-2 border-b border-[#eae4d7]/16 ${
+          className={`flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 border-b border-[#211813]/14 ${
             embeddedInStage ? "pb-1.5" : "pb-2"
           }`}
         >
-          <span className="font-utility text-[14px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-sage)]">
-            Built with {tool.label}
+          <span className="flex flex-wrap items-baseline gap-x-3">
+            <span className="font-utility text-[14px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-monarch)]">
+              Built with {tool.label}
+            </span>
+            <span className="font-utility text-[14px] tracking-[0.02em] text-[var(--ink-muted-dark)]">
+              {isSingle ? "1 Shipped Build" : `${tool.relatedBuilds.length} Shipped Builds`}
+            </span>
           </span>
-          <span className="font-utility text-[14px] text-[#cfd9d2]">
-            {isSingle ? "1 Shipped Build" : `${tool.relatedBuilds.length} Shipped Builds`}
-          </span>
+          {anyReel ? (
+            <span className="font-editorial-serif text-[15px] italic text-[var(--ink-body-dark)]">
+              {reelInvitation}
+            </span>
+          ) : null}
         </div>
 
         <ul
-          className={`${embeddedInStage ? "mt-2 gap-2.5" : "mt-2.5 gap-3"} grid grid-cols-1 ${
+          className={`${embeddedInStage ? "mt-1" : "mt-1.5"} grid grid-cols-1 ${
             tool.relatedBuilds.length === 2
-              ? "md:grid-cols-2 lg:gap-3.5"
+              ? "md:grid-cols-2"
               : tool.relatedBuilds.length >= 3
-                ? "md:grid-cols-3 lg:gap-3.5"
+                ? "md:grid-cols-3"
                 : ""
           }`}
         >
@@ -405,9 +417,9 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                       }
                     : undefined
                 }
-                className={`relative border bg-[#203028]/70 transition-colors duration-300 hover:border-[#cde0c0]/40 ${
-                  reelOpen ? "border-[#cde0c0]/40" : "border-[#eae4d7]/12"
-                } ${embeddedInStage ? "px-3 py-1.5" : "px-4 py-3"} ${
+                className={`build-sheet__entry relative border-[#211813]/12 transition-colors duration-300 not-first:border-t md:not-first:border-t-0 md:not-first:border-l ${
+                  reelOpen ? "is-screening" : ""
+                } ${embeddedInStage ? "px-3.5 py-2" : "px-4 py-3"} ${
                   isSingle ? "md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-6" : ""
                 }`}
               >
@@ -424,10 +436,11 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                 <div className={isSingle ? "space-y-0.5" : ""}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span
-                      className={`font-editorial-serif font-medium text-[var(--ink-cream)] ${
-                        embeddedInStage ? "text-[16.5px]" : "text-[18px]"
+                      className={`relative font-editorial-serif font-medium text-[var(--ink-espresso)] ${
+                        embeddedInStage ? "text-[17px]" : "text-[18px]"
                       }`}
                     >
+                      {reel ? <span aria-hidden="true" className="build-sheet__marker" /> : null}
                       {project.title}
                     </span>
 
@@ -457,7 +470,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                   </div>
 
                   <p
-                    className={`mt-0.5 font-editorial-serif leading-[1.4] text-[var(--ink-olive-cream)] ${
+                    className={`mt-0.5 font-editorial-serif leading-[1.4] text-[var(--ink-body-dark)] ${
                       embeddedInStage ? "text-[14.5px]" : "text-[15.5px]"
                     }`}
                   >
@@ -786,7 +799,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                             <div
                               data-slot="stack-related-builds"
                               aria-live="polite"
-                              className="mt-2 border border-[#cde0c0]/35 bg-[#18241d] px-4 py-3.5"
+                              className="build-sheet mt-2 px-4 py-3.5"
                             >
                               {renderSelectedBuilds(tool)}
                             </div>
@@ -808,9 +821,12 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
               }
               data-stack-seq={seqInfo.relatedBuilds}
               aria-live="polite"
-              className={`relative z-20 border border-[#eae4d7]/16 bg-[#18241d] transition-colors duration-300 md:col-span-2 lg:col-span-3 lg:col-start-2 lg:row-start-2 lg:self-end ${
-                inlineMobileBuilds && selectedTool ? "hidden" : ""
-              } ${embeddedInStage ? "px-4 py-2.5" : "px-5 py-5 sm:px-7"}`}
+              data-state={selectedTool && !inlineMobileBuilds ? "active" : "idle"}
+              className={`relative z-20 transition-[background-color,box-shadow,border-color] duration-500 md:col-span-2 lg:col-span-3 lg:col-start-2 lg:row-start-2 lg:self-end ${
+                selectedTool && !inlineMobileBuilds ? "build-sheet" : "border border-[#eae4d7]/16 bg-[#18241d]"
+              } ${inlineMobileBuilds && selectedTool ? "hidden" : ""} ${
+                embeddedInStage ? "px-4 py-2.5" : "px-5 py-5 sm:px-7"
+              }`}
             >
               {selectedTool && !inlineMobileBuilds ? (
                 renderSelectedBuilds(selectedTool)

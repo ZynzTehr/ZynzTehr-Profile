@@ -90,11 +90,18 @@ export type StackToolId =
 
 export type StackProjectId = keyof typeof stackBuildsData.projects & string;
 
+/** Mirrored 960x600 portfolio clip and still for a shipped build (see scripts/sync-stack-builds.mjs). */
+export interface StackReel {
+  video: string;
+  poster: string;
+}
+
 export interface StackProject {
   id: StackProjectId;
   title: string;
   href: string;
   sourceHref: string;
+  reel: StackReel | null;
 }
 
 export interface StackToolBuild {
@@ -332,6 +339,12 @@ function getToolBuilds(toolId: StackToolId): readonly StackToolBuild[] {
   );
 }
 
+function readReel(project: object): StackReel | null {
+  const reel = "reel" in project ? (project.reel as Partial<StackReel> | null | undefined) : null;
+  if (!reel || typeof reel.video !== "string" || typeof reel.poster !== "string") return null;
+  return { video: reel.video, poster: reel.poster };
+}
+
 export const STACK_PROJECTS: Readonly<Record<StackProjectId, StackProject>> =
   Object.fromEntries(
     Object.entries(stackBuildsData.projects).map(([key, project]) => [
@@ -341,6 +354,7 @@ export const STACK_PROJECTS: Readonly<Record<StackProjectId, StackProject>> =
         title: project.title,
         href: project.href,
         sourceHref: project.sourceHref,
+        reel: readReel(project),
       },
     ]),
   ) as Readonly<Record<StackProjectId, StackProject>>;

@@ -5,10 +5,15 @@ import {
   STACK_COLUMNS,
   STACK_CONTENT,
   STACK_PROJECTS,
+  type StackProjectId,
   type StackTool,
   type StackToolId,
 } from "../data/profileContent";
 import { ensureGsapPlugins, gsap, prefersReducedMotion } from "../lib/scrollEngine";
+import { BuildReel, useReelPointerMode, type ReelAlign } from "./BuildReel";
+
+const REEL_OPEN_DELAY_MS = 140;
+const REEL_CLOSE_DELAY_MS = 160;
 
 interface PairingSpline {
   id: string;
@@ -87,6 +92,74 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
     [selectedTool],
   );
   const reduced = prefersReducedMotion();
+
+  // Build reels: one open at a time, hover/focus intent on fine pointers, explicit toggle on touch
+  const reelPointerMode = useReelPointerMode();
+  const [openReelId, setOpenReelId] = useState<StackProjectId | null>(null);
+  const reelTimers = useRef<{ open?: number; close?: number }>({});
+
+  const clearReelTimers = useCallback(() => {
+    window.clearTimeout(reelTimers.current.open);
+    window.clearTimeout(reelTimers.current.close);
+    reelTimers.current = {};
+  }, []);
+
+  const closeReel = useCallback((projectId?: StackProjectId) => {
+    setOpenReelId((prev) => (projectId === undefined || prev === projectId ? null : prev));
+  }, []);
+
+  useEffect(() => {
+    clearReelTimers();
+    setOpenReelId(null);
+  }, [selectedToolId, clearReelTimers]);
+
+  useEffect(() => clearReelTimers, [clearReelTimers]);
+
+  useEffect(() => {
+    if (!openReelId) return;
+    const section = sectionRef.current;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      clearReelTimers();
+      setOpenReelId(null);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (reelPointerMode !== "tap") return;
+      const card = event.target instanceof Element ? event.target.closest("[data-project-id]") : null;
+      if (card?.getAttribute("data-project-id") !== openReelId) setOpenReelId(null);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+
+    let observer: IntersectionObserver | null = null;
+    const card = section?.querySelector(`[data-project-id="${openReelId}"]`);
+    if (card && typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => !entry.isIntersecting)) setOpenReelId(null);
+      });
+      observer.observe(card);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+      observer?.disconnect();
+    };
+  }, [openReelId, reelPointerMode, clearReelTimers]);
+
+  const scheduleReelOpen = (projectId: StackProjectId) => {
+    clearReelTimers();
+    if (openReelId === projectId) return;
+    // Sweeping from one open reel to the next card swaps immediately
+    const delay = openReelId ? 0 : REEL_OPEN_DELAY_MS;
+    reelTimers.current.open = window.setTimeout(() => setOpenReelId(projectId), delay);
+  };
+
+  const scheduleReelClose = (projectId: StackProjectId) => {
+    clearReelTimers();
+    reelTimers.current.close = window.setTimeout(() => closeReel(projectId), REEL_CLOSE_DELAY_MS);
+  };
 
   const recomputeSplines = useCallback(() => {
     const clearSplines = () => {
@@ -227,6 +300,35 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
       "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[var(--accent-sage)] underline decoration-[#cde0c0]/40 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
     const linkClassSecondary =
       "inline-flex min-h-11 items-center font-utility text-[14px] font-medium text-[#cfd9d2] underline decoration-[#cfd9d2]/35 underline-offset-4 transition-colors hover:text-[var(--ink-cream)] hover:decoration-[var(--ink-cream)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] lg:min-h-6";
+    const reelPlacement = inlineMobileBuilds ? "inline" : "overlay";
+    const buildCount = tool.relatedBuilds.length;
+    const reelAlign = (index: number): ReelAlign =>
+      buildCount < 2 || index === 0 ? "start" : index === buildCount - 1 ? "end" : "center";
+
+    const renderReelToggle = (projectId: StackProjectId, title: string) => {
+      if (reelPointerMode !== "tap") return null;
+      const isOpen = openReelId === projectId;
+      return (
+        <button
+          type="button"
+          data-slot="build-reel-toggle"
+          aria-pressed={isOpen}
+          aria-label={`${title} reel`}
+          onClick={() => setOpenReelId((prev) => (prev === projectId ? null : projectId))}
+          className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 font-utility text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-sage)] ${
+            isOpen ? "text-[var(--ink-cream)]" : "text-[var(--accent-sage)]"
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-3 rounded-full bg-[var(--accent-brass)] transition-transform duration-300 ${
+              isOpen ? "scale-x-75" : ""
+            }`}
+          />
+          Reel
+        </button>
+      );
+    };
 
     return (
       <motion.div
@@ -257,18 +359,66 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                 : ""
           }`}
         >
-          {tool.relatedBuilds.map((build) => {
+          {tool.relatedBuilds.map((build, index) => {
             const project = STACK_PROJECTS[build.projectId];
             if (!project) return null;
+            const projectId = build.projectId;
+            const reel = project.reel;
+            const hoverReels = Boolean(reel) && reelPointerMode === "hover";
+            const reelOpen = openReelId === projectId;
 
             return (
               <li
-                key={build.projectId}
-                data-project-id={build.projectId}
-                className={`border border-[#eae4d7]/12 bg-[#203028]/70 transition-colors duration-300 hover:border-[#cde0c0]/40 ${
-                  embeddedInStage ? "px-3 py-1.5" : "px-4 py-3"
-                } ${isSingle ? "md:flex md:items-center md:justify-between md:gap-6" : ""}`}
+                key={projectId}
+                data-project-id={projectId}
+                data-reel-open={reelOpen ? "true" : undefined}
+                onPointerEnter={
+                  hoverReels
+                    ? (event) => {
+                        if (event.pointerType === "mouse") scheduleReelOpen(projectId);
+                      }
+                    : undefined
+                }
+                onPointerLeave={
+                  hoverReels
+                    ? (event) => {
+                        if (event.pointerType === "mouse") scheduleReelClose(projectId);
+                      }
+                    : undefined
+                }
+                onFocus={
+                  hoverReels
+                    ? () => {
+                        clearReelTimers();
+                        setOpenReelId(projectId);
+                      }
+                    : undefined
+                }
+                onBlur={
+                  hoverReels
+                    ? (event) => {
+                        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                        clearReelTimers();
+                        closeReel(projectId);
+                      }
+                    : undefined
+                }
+                className={`relative border bg-[#203028]/70 transition-colors duration-300 hover:border-[#cde0c0]/40 ${
+                  reelOpen ? "border-[#cde0c0]/40" : "border-[#eae4d7]/12"
+                } ${embeddedInStage ? "px-3 py-1.5" : "px-4 py-3"} ${
+                  isSingle ? "md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-6" : ""
+                }`}
               >
+                {reel ? (
+                  <BuildReel
+                    reel={reel}
+                    title={project.title}
+                    open={reelOpen}
+                    placement={reelPlacement}
+                    align={reelAlign(index)}
+                    reduced={reduced}
+                  />
+                ) : null}
                 <div className={isSingle ? "space-y-0.5" : ""}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span
@@ -299,6 +449,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                         >
                           Source ↗
                         </a>
+                        {reel ? renderReelToggle(projectId, project.title) : null}
                       </span>
                     ) : null}
                   </div>
@@ -332,6 +483,7 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
                     >
                       Source ↗
                     </a>
+                    {reel ? renderReelToggle(projectId, project.title) : null}
                   </div>
                 ) : null}
               </li>

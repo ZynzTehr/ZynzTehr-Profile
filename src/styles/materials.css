@@ -249,6 +249,200 @@
     transform-origin: center;
     animation: atelier-plumb-arrow-morph 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
+
+  /* Act 03 build reel: cotton-rag scroll unfurling out of a brass roller */
+  .build-reel {
+    --reel-roller-h: 9px;
+    --reel-cap: 13px;
+    --reel-gutter: 8px;
+  }
+
+  .build-reel--overlay {
+    position: absolute;
+    bottom: calc(100% - var(--reel-roller-h) / 2);
+    z-index: 30;
+    width: max(100% + 2 * var(--reel-gutter), 25rem);
+    pointer-events: none;
+  }
+
+  .build-reel--overlay[data-align="start"] {
+    left: calc(-1 * var(--reel-gutter));
+  }
+
+  .build-reel--overlay[data-align="end"] {
+    right: calc(-1 * var(--reel-gutter));
+  }
+
+  .build-reel--overlay[data-align="center"] {
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .build-reel--inline {
+    position: relative;
+    flex-basis: 100%;
+    overflow: hidden;
+    margin-inline: calc(-1 * var(--reel-gutter));
+  }
+
+  .build-reel--inline .build-reel__window {
+    padding-bottom: 0;
+  }
+
+  .build-reel--inline > .build-reel__roller--base {
+    margin-bottom: 10px;
+  }
+
+  .build-reel__window {
+    overflow: hidden;
+    padding: 0 var(--reel-gutter);
+  }
+
+  .build-reel__sheet {
+    pointer-events: auto;
+    filter: drop-shadow(0 22px 26px rgba(8, 14, 11, 0.55)) drop-shadow(0 3px 5px rgba(8, 14, 11, 0.35));
+  }
+
+  .build-reel--inline .build-reel__sheet {
+    padding-top: 6px;
+    filter: drop-shadow(0 10px 14px rgba(8, 14, 11, 0.45));
+  }
+
+  .build-reel__roller {
+    position: relative;
+    height: var(--reel-roller-h);
+    margin: 0 2px;
+    border-radius: 999px;
+    background: linear-gradient(
+      180deg,
+      #f0dcae 0%,
+      #c9a160 28%,
+      var(--accent-brass) 52%,
+      #6f5328 82%,
+      #4b381b 100%
+    );
+    box-shadow:
+      0 2px 4px -1px rgba(8, 14, 11, 0.55),
+      0 0 0 0.5px rgba(40, 28, 12, 0.55);
+  }
+
+  .build-reel__roller::before,
+  .build-reel__roller::after {
+    content: "";
+    position: absolute;
+    top: calc((var(--reel-roller-h) - var(--reel-cap)) / 2);
+    width: var(--reel-cap);
+    height: var(--reel-cap);
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #f6e6bf 0%, #b88f52 46%, #5c4420 100%);
+    box-shadow: 0 1px 2px rgba(8, 14, 11, 0.6);
+  }
+
+  .build-reel__roller::before {
+    left: calc(-1 * var(--reel-cap) / 2);
+  }
+
+  .build-reel__roller::after {
+    right: calc(-1 * var(--reel-cap) / 2);
+  }
+
+  .build-reel__roller--base {
+    margin-inline: calc(var(--reel-gutter) + 2px);
+    transform-origin: center;
+  }
+
+  .build-reel__paper {
+    margin: -3px 6px 0;
+    padding: 12px 10px 9px;
+    color: var(--ink-espresso);
+    background-color: var(--surface-rag);
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(33, 24, 19, 0.2) 0,
+        rgba(33, 24, 19, 0) 11px,
+        rgba(33, 24, 19, 0) calc(100% - 9px),
+        rgba(33, 24, 19, 0.16) 100%
+      ),
+      linear-gradient(180deg, rgba(255, 253, 249, 0.7) 0%, rgba(244, 236, 222, 0.4) 100%),
+      url("/media/paper-grain.webp");
+    background-size: auto, auto, 192px 192px;
+    background-blend-mode: normal, normal, soft-light;
+  }
+
+  .build-reel__frame {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #18241d;
+  }
+
+  .build-reel__frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow:
+      inset 0 0 0 1px rgba(33, 24, 19, 0.88),
+      inset 0 0 18px rgba(8, 14, 11, 0.22);
+  }
+
+  .build-reel__still,
+  .build-reel__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .build-reel__video {
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+  }
+
+  .build-reel__video.is-playing {
+    opacity: 1;
+  }
+
+  .build-reel__meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 2px 0;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .build-reel__title {
+    overflow: hidden;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .build-reel__clock {
+    flex-shrink: 0;
+    color: var(--ink-muted-dark);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+
+  .build-reel__thread {
+    height: 2px;
+    margin: 6px 2px 0;
+    overflow: hidden;
+    background: rgba(166, 64, 40, 0.16);
+  }
+
+  .build-reel__thread > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-monarch);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
 }
 
 @keyframes atelier-plumb-travel {

@@ -61,6 +61,25 @@ function mockViewportMatchMedia(opts: { minWidth: number; reducedMotion?: boolea
   });
 }
 
+function mockReelMatchMedia(opts: { hover: boolean; reducedMotion?: boolean; compact?: boolean }) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => {
+    let matches = false;
+    if (query === "(hover: hover) and (pointer: fine)") matches = opts.hover;
+    else if (query === "(prefers-reduced-motion: reduce)") matches = Boolean(opts.reducedMotion);
+    else if (query === "(max-width: 1023px)") matches = Boolean(opts.compact);
+    return {
+      matches,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    };
+  });
+}
+
 afterEach(() => {
   cleanup();
   window.matchMedia = originalMatchMedia;
@@ -602,5 +621,124 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
 
     // Seq 25 is the lower-right shipped builds pocket
     expect(seqNodes[25]?.getAttribute("data-slot")).toBe("stack-related-builds");
+  });
+});
+
+describe("Act03Stack build reels", () => {
+  const reelIn = (container: HTMLElement, projectId: string) =>
+    container.querySelector(`li[data-project-id="${projectId}"] [data-slot="build-reel"]`);
+  const card = (container: HTMLElement, projectId: string) =>
+    container.querySelector<HTMLElement>(`li[data-project-id="${projectId}"]`)!;
+
+  it("unfurls one reel at a time on hover after an intent delay, swaps across cards, and furls on leave, blur, or Escape", async () => {
+    mockReelMatchMedia({ hover: true });
+    const user = userEvent.setup();
+    const { container } = render(<Act03Stack embeddedInStage />);
+    await user.click(screen.getByRole("button", { name: "PostgreSQL" }));
+
+    expect(container.querySelectorAll('[data-slot="build-reel-toggle"]')).toHaveLength(0);
+
+    await user.hover(card(container, "campfire"));
+    expect(reelIn(container, "campfire")).toBeNull();
+    await waitFor(() => expect(reelIn(container, "campfire")).not.toBeNull());
+    const reel = reelIn(container, "campfire")!;
+    expect(reel).toHaveAttribute("aria-hidden", "true");
+    expect(reel).toHaveAttribute("data-placement", "overlay");
+    expect(reel).toHaveAttribute("data-align", "start");
+    const video = reel.querySelector("video")!;
+    expect(video.getAttribute("src")).toMatch(/^\/media\/builds\/campfire\/reel-[0-9a-f]{10}\.mp4$/);
+    expect(video.muted).toBe(true);
+    expect(video).toHaveAttribute("playsinline");
+    expect(reel.querySelector("img")?.getAttribute("src")).toMatch(/\.webp$/);
+
+    await user.hover(card(container, "job-seance"));
+    await waitFor(() => {
+      expect(reelIn(container, "job-seance")).toHaveAttribute("data-align", "center");
+      expect(reelIn(container, "campfire")).toBeNull();
+    });
+    expect(container.querySelectorAll('[data-slot="build-reel"]')).toHaveLength(1);
+
+    await user.unhover(card(container, "job-seance"));
+    await waitFor(() => expect(container.querySelector('[data-slot="build-reel"]')).toBeNull());
+
+    act(() => {
+      screen.getByRole("link", { name: "AniBeam live deployment" }).focus();
+    });
+    await waitFor(() => expect(reelIn(container, "ani-beam")).toHaveAttribute("data-align", "end"));
+    act(() => {
+      screen.getByRole("link", { name: "AniBeam source repository" }).focus();
+    });
+    expect(reelIn(container, "ani-beam")).not.toBeNull();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(container.querySelector('[data-slot="build-reel"]')).toBeNull());
+  });
+
+  it("resets the open reel when the selected instrument changes", async () => {
+    mockReelMatchMedia({ hover: true });
+    const user = userEvent.setup();
+    const { container } = render(<Act03Stack embeddedInStage />);
+    await user.click(screen.getByRole("button", { name: "PostgreSQL" }));
+    act(() => {
+      screen.getByRole("link", { name: "JobSeance live deployment" }).focus();
+    });
+    await waitFor(() => expect(reelIn(container, "job-seance")).not.toBeNull());
+
+    await user.click(screen.getByRole("button", { name: "Prisma" }));
+    await waitFor(() => expect(container.querySelector('[data-slot="build-reel"]')).toBeNull());
+  });
+
+  it("gives touch pointers a pressed-state Reel toggle that closes on a second tap or a tap outside", async () => {
+    mockReelMatchMedia({ hover: false });
+    const user = userEvent.setup();
+    const { container } = render(<Act03Stack embeddedInStage />);
+    await user.click(screen.getByRole("button", { name: "PostgreSQL" }));
+
+    const toggles = container.querySelectorAll('[data-slot="build-reel-toggle"]');
+    expect(toggles).toHaveLength(3);
+    const toggle = screen.getByRole("button", { name: "Campfire of the Damned reel" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    // Hover does nothing on touch-first devices
+    await user.hover(card(container, "campfire"));
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(reelIn(container, "campfire")).toBeNull();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(reelIn(container, "campfire")).not.toBeNull();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await waitFor(() => expect(reelIn(container, "campfire")).toBeNull());
+
+    await user.click(screen.getByRole("button", { name: "AniBeam reel" }));
+    expect(reelIn(container, "ani-beam")).not.toBeNull();
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => expect(reelIn(container, "ani-beam")).toBeNull());
+  });
+
+  it("renders the still only, with no video, under reduced motion", async () => {
+    mockReelMatchMedia({ hover: true, reducedMotion: true });
+    const user = userEvent.setup();
+    const { container } = render(<Act03Stack embeddedInStage />);
+    await user.click(screen.getByRole("button", { name: "IndexedDB" }));
+    act(() => {
+      screen.getByRole("link", { name: "Fleet Pulse live deployment" }).focus();
+    });
+    await waitFor(() => expect(reelIn(container, "fleet-pulse")).not.toBeNull());
+    const reel = reelIn(container, "fleet-pulse")!;
+    expect(reel.querySelector("video")).toBeNull();
+    expect(reel.querySelector("img")).not.toBeNull();
+    expect(reel.textContent).toContain("Still");
+  });
+
+  it("unrolls inline inside the card on compact layouts instead of overlaying upward", async () => {
+    mockReelMatchMedia({ hover: false, compact: true });
+    const user = userEvent.setup();
+    const { container } = render(<Act03Stack />);
+    await user.click(screen.getByRole("button", { name: "IndexedDB" }));
+    await user.click(screen.getByRole("button", { name: "Fleet Pulse reel" }));
+    expect(reelIn(container, "fleet-pulse")).toHaveAttribute("data-placement", "inline");
   });
 });

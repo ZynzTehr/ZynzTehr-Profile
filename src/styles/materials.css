@@ -299,6 +299,7 @@
   }
 
   .build-reel__sheet {
+    container-type: inline-size;
     pointer-events: auto;
     filter: drop-shadow(0 22px 26px rgba(8, 14, 11, 0.55)) drop-shadow(0 3px 5px rgba(8, 14, 11, 0.35));
   }
@@ -368,6 +369,18 @@
       url("/media/paper-grain.webp");
     background-size: auto, auto, 192px 192px;
     background-blend-mode: normal, normal, soft-light;
+  }
+
+  /* Cloth wrapper: the paper lives in an absolutely positioned capture canvas,
+     so the wrapper carries the paper's height (16:10 frame + fixed chrome). */
+  .build-reel__cloth {
+    margin: -3px 6px 0;
+    height: calc((100cqw - 32px) * 0.625 + 54px);
+  }
+
+  .build-reel__cloth .build-reel__paper {
+    height: 100%;
+    margin: 0;
   }
 
   .build-reel__frame {

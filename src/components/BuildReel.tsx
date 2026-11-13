@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import type { StackReel } from "../data/profileContent";
+import { Cloth, supportsHtmlInCanvas, type ClothOptions } from "./canvasui/Cloth";
 
 export type ReelPointerMode = "hover" | "tap";
 export type ReelPlacement = "overlay" | "inline";
@@ -31,6 +32,36 @@ function prefersSavedData(): boolean {
   if (typeof navigator === "undefined") return false;
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
   return Boolean(connection?.saveData);
+}
+
+/**
+ * Cotton-rag held between two brass rollers: anchored at the base roller, a
+ * light breeze, shallow folds, and a brush that lets the cursor send waves
+ * across the sheet. Backing is the rag tone so the fabric never samples the
+ * olive page and switches to its dark-page lighting.
+ */
+const CLOTH_TUNING: ClothOptions = {
+  pin: "bottom",
+  wind: 1.3,
+  speed: 0.5,
+  amplitude: 15,
+  drape: 9,
+  brush: 2,
+  brushSize: 120,
+  damping: 1.1,
+  light: 0.8,
+  sheen: 0.12,
+  shadow: 0,
+  cornerRadius: 1,
+  perspective: 1000,
+  backing: [0.969, 0.945, 0.902],
+};
+
+/** Only browsers that can capture live HTML get the cloth; the rest keep the flat sheet. */
+function canRenderCloth(): boolean {
+  if (typeof window === "undefined" || typeof CanvasRenderingContext2D === "undefined") return false;
+  if (!("drawElementImage" in CanvasRenderingContext2D.prototype)) return false;
+  return supportsHtmlInCanvas();
 }
 
 function formatClock(seconds: number): string {
@@ -95,54 +126,66 @@ function ReelSheet({ reel, title, stillOnly, variants }: ReelSheetProps) {
     return () => cancelAnimationFrame(frame);
   }, [playing]);
 
+  const [cloth] = useState(() => !stillOnly && canRenderCloth());
+
+  const paper = (
+    <div className="build-reel__paper">
+      <div className="build-reel__frame">
+        <img
+          src={reel.poster}
+          alt=""
+          width={960}
+          height={600}
+          decoding="async"
+          className="build-reel__still"
+        />
+        {stillOnly ? null : (
+          <video
+            ref={(el) => {
+              videoRef.current = el;
+              // React does not always reflect `muted` as an attribute; set the property before autoplay.
+              if (el) el.muted = true;
+            }}
+            data-slot="build-reel-video"
+            src={reel.video}
+            poster={reel.poster}
+            muted
+            playsInline
+            loop
+            autoPlay
+            preload="auto"
+            tabIndex={-1}
+            onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+            onPlaying={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            className={`build-reel__video ${playing ? "is-playing" : ""}`}
+          />
+        )}
+      </div>
+      <div className="build-reel__meta font-utility">
+        <span className="build-reel__title">{title}</span>
+        <span className="build-reel__clock">
+          {stillOnly ? "Still" : duration ? formatClock(duration) : "Reel"}
+        </span>
+      </div>
+      {stillOnly ? null : (
+        <div className="build-reel__thread">
+          <span ref={threadRef} />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <motion.div variants={variants} className="build-reel__sheet">
       <div className="build-reel__roller" />
-      <div className="build-reel__paper">
-        <div className="build-reel__frame">
-          <img
-            src={reel.poster}
-            alt=""
-            width={960}
-            height={600}
-            decoding="async"
-            className="build-reel__still"
-          />
-          {stillOnly ? null : (
-            <video
-              ref={(el) => {
-                videoRef.current = el;
-                // React does not always reflect `muted` as an attribute; set the property before autoplay.
-                if (el) el.muted = true;
-              }}
-              data-slot="build-reel-video"
-              src={reel.video}
-              poster={reel.poster}
-              muted
-              playsInline
-              loop
-              autoPlay
-              preload="auto"
-              tabIndex={-1}
-              onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-              onPlaying={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-              className={`build-reel__video ${playing ? "is-playing" : ""}`}
-            />
-          )}
-        </div>
-        <div className="build-reel__meta font-utility">
-          <span className="build-reel__title">{title}</span>
-          <span className="build-reel__clock">
-            {stillOnly ? "Still" : duration ? formatClock(duration) : "Reel"}
-          </span>
-        </div>
-        {stillOnly ? null : (
-          <div className="build-reel__thread">
-            <span ref={threadRef} />
-          </div>
-        )}
-      </div>
+      {cloth ? (
+        <Cloth className="build-reel__cloth" {...CLOTH_TUNING}>
+          {paper}
+        </Cloth>
+      ) : (
+        paper
+      )}
     </motion.div>
   );
 }

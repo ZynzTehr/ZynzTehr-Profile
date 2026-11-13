@@ -224,34 +224,50 @@ export function MenuOverlay({
           dismiss();
         }
       }}
-      className={`m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-transparent p-0 text-[var(--ink-cream)] backdrop:bg-transparent ${
+      className={`m-0 h-dvh max-h-none w-screen max-w-none overflow-clip border-0 bg-transparent p-0 text-[var(--ink-cream)] backdrop:bg-transparent ${
         open ? "" : "pointer-events-none"
       }`}
     >
       <AnimatePresence onExitComplete={finalizeDialogClose}>
         {sheetPresent ? (
-          // Plain container: nothing animates on the sheet's ancestors (an animating
-          // backdrop-filter on the sheet's parent is heavy in Safari and can desync its layers)
           <motion.div
             key="atelier-menu-backdrop"
             data-slot="menu-backdrop"
-            className="relative flex h-full w-full justify-end overflow-hidden"
-          >
-            {/* Tinted, blurred scrim behind the sheet: static blur, only its opacity animates */}
-            <motion.div
-              aria-hidden="true"
-              data-slot="menu-scrim"
-              initial={reduced ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={
-                reduced
-                  ? { opacity: 0 }
-                  : { opacity: 0, transition: { duration: 0.48, ease: SILK_EASE } }
+            initial={
+              reduced
+                ? false
+                : { opacity: 0, backdropFilter: "blur(0px)" }
+            }
+            animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
+            exit={
+              reduced
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    backdropFilter: "blur(0px)",
+                    transition: { duration: 0.48, ease: SILK_EASE },
+                  }
+            }
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: 0.62, ease: SILK_EASE }
+            }
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                dismiss();
               }
-              transition={reduced ? { duration: 0 } : { duration: 0.62, ease: SILK_EASE }}
-              onClick={dismiss}
-              className="absolute inset-0 bg-[#140e0b]/72 backdrop-blur-[6px]"
-            />
+            }}
+            // overflow: clip, not hidden. Focusing the close button while the sheet is still off
+            // to the right made WebKit scroll this box 560px sideways (hidden boxes stay
+            // programmatically scrollable): the sheet jumped left, then crept back. Clip boxes
+            // cannot scroll; onScroll resets it for Safari versions without overflow: clip.
+            onScroll={(event) => {
+              event.currentTarget.scrollLeft = 0;
+              event.currentTarget.scrollTop = 0;
+            }}
+            className="flex h-full w-full justify-end overflow-clip bg-[#140e0b]/72"
+          >
             <motion.div
               data-slot="menu-sheet"
               data-swipe={swipeToClose ? "close" : undefined}
@@ -293,7 +309,7 @@ export function MenuOverlay({
                       opacity: { duration: 0.46, ease: SILK_EASE },
                     }
               }
-              className="material-espresso relative z-10 flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto overscroll-contain border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
+              className="material-espresso relative flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto overscroll-contain border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
             >
               {touchScreen ? (
                 <span

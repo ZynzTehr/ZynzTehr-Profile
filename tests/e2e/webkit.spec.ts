@@ -4,6 +4,37 @@ import { expect, test } from "@playwright/test";
  * Safari-engine checks (project "webkit-ipad", iPad gen 7 portrait 810x1080, touch).
  * Runs only where WebKit is installed; see playwright.config.ts.
  */
+/**
+ * Open the menu and sample, every frame: the backdrop box's scrollLeft and the gap between where
+ * the sheet is painted and where its transform puts it. WebKit used to scroll the backdrop
+ * sideways to reveal the focused (still off-screen) close button, throwing the sheet left by its
+ * own width mid-slide: the menu "jump" seen in Safari.
+ */
+async function sampleMenuOpen(page: import("@playwright/test").Page, useTap: boolean) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __menu: { scrollLeft: number; paintGap: number }[] };
+    w.__menu = [];
+    const sample = () => {
+      const sheet = document.querySelector<HTMLElement>('[data-slot="menu-sheet"]');
+      const backdrop = document.querySelector<HTMLElement>('[data-slot="menu-backdrop"]');
+      if (sheet && backdrop) {
+        const t = getComputedStyle(sheet).transform;
+        const shift = t === "none" ? 0 : new DOMMatrix(t).m41;
+        w.__menu.push({
+          scrollLeft: backdrop.scrollLeft,
+          paintGap: Math.round(sheet.getBoundingClientRect().left - (sheet.offsetLeft + shift)),
+        });
+      }
+      if (w.__menu.length < 45) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  const trigger = page.locator('[data-slot="chapter-bar"] button[aria-controls="atelier-menu-dialog"]');
+  await (useTap ? trigger.tap() : trigger.click());
+  await page.waitForTimeout(1000);
+  return page.evaluate(() => (window as unknown as { __menu: { scrollLeft: number; paintGap: number }[] }).__menu);
+}
+
 test.describe("WebKit (Safari engine) on iPad portrait", () => {
   test("the hero plate keeps its cotton-rag mat on all four sides", async ({ page }) => {
     // WebKit resolved h-full against the aspect-ratio box and pushed the image over the bottom mat
@@ -19,6 +50,15 @@ test.describe("WebKit (Safari engine) on iPad portrait", () => {
     });
     expect(insets).not.toBeNull();
     for (const inset of insets!) expect(inset).toBeGreaterThanOrEqual(6);
+  });
+
+  test("the menu sheet slides in without its container scrolling (no open jump)", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const frames = await sampleMenuOpen(page, true);
+    expect(frames.length).toBeGreaterThan(20);
+    expect(frames.filter((f) => f.scrollLeft !== 0)).toEqual([]);
+    expect(frames.filter((f) => Math.abs(f.paintGap) > 3)).toEqual([]);
   });
 
   test("the espresso Journey sheet slides over the hero and the chapter label follows", async ({ page }) => {
@@ -65,6 +105,20 @@ test.describe("WebKit (Safari engine) on a desktop mouse", () => {
     expect(new Set(widths)).toEqual(new Set([widths[0]]));
     await page.keyboard.press("Escape");
     await expect(page.locator("#atelier-menu-dialog")).not.toHaveAttribute("open", "", { timeout: 5000 });
+  });
+
+  test("the menu sheet slides in without its container scrolling (no open jump)", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    for (let cycle = 0; cycle < 3; cycle += 1) {
+      const frames = await sampleMenuOpen(page, false);
+      expect(frames.length).toBeGreaterThan(20);
+      expect(frames.filter((f) => f.scrollLeft !== 0)).toEqual([]);
+      expect(frames.filter((f) => Math.abs(f.paintGap) > 3)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#atelier-menu-dialog")).not.toHaveAttribute("open", "", { timeout: 5000 });
+      await page.waitForTimeout(300);
+    }
   });
 
   test("the hero intro plays from the H.264 source", async ({ page }) => {

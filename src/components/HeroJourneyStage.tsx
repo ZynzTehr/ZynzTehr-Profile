@@ -7,6 +7,7 @@ import {
 } from "../data/profileContent";
 import {
   canPlayAmbientLoop,
+  prefersMobileVideo,
   ensureGsapPlugins,
   gsap,
   isDesktopStageEligible,
@@ -102,6 +103,8 @@ export function HeroJourneyStage({
   const [introSettled, setIntroSettled] = useState<boolean>(() => prefersReducedMotion());
 
   const showLoopVideo = hasHeroVideo && ambientVideoEligible;
+  // Phones: 960 px encodes, and the transition loop only buffers once it is needed
+  const [mobileVideo] = useState<boolean>(() => prefersMobileVideo());
   const showIntroVideo = effectiveHasIntroVideo && ambientVideoEligible;
   const anyHeroVideoActive = showLoopVideo || showIntroVideo;
 
@@ -598,7 +601,10 @@ export function HeroJourneyStage({
 
     ensureGsapPlugins();
 
+    // Desktop and tablets hold the text for the butterfly-first opening; phones reveal it
+    // alongside the clip so the name and calls to action never wait ~8 s on a small screen
     const waitForButterflyVideo =
+      !mobileVideo &&
       showIntroVideo &&
       !introEndedRef.current &&
       !heroTextStartedRef.current &&
@@ -1221,7 +1227,7 @@ export function HeroJourneyStage({
             data-slot="hero-transition-video"
             muted
             playsInline
-            preload="auto"
+            preload={mobileVideo ? "metadata" : "auto"}
             aria-hidden="true"
             poster="/media/hero-monarch.webp"
             onEnded={handleLoopVideoEnded}
@@ -1230,9 +1236,9 @@ export function HeroJourneyStage({
             style={{ opacity: showIntroVideo ? 0 : 1 }}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[52%_42%] transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            <source src="/media/hero-monarch-loop.webm" type="video/webm" />
+            {mobileVideo ? null : <source src="/media/hero-monarch-loop.webm" type="video/webm" />}
             <source
-              src="/media/hero-monarch-loop.mp4"
+              src={mobileVideo ? "/media/hero-monarch-loop-m.mp4" : "/media/hero-monarch-loop.mp4"}
               type="video/mp4"
               onError={handleLoopVideoError}
             />
@@ -1254,9 +1260,9 @@ export function HeroJourneyStage({
             style={{ opacity: 1 }}
             className="pointer-events-none absolute inset-0 h-full w-full bg-[#ddd2c0] object-cover object-[52%_42%] transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
-            <source src="/media/hero-monarch-intro.webm" type="video/webm" />
+            {mobileVideo ? null : <source src="/media/hero-monarch-intro.webm" type="video/webm" />}
             <source
-              src="/media/hero-monarch-intro.mp4"
+              src={mobileVideo ? "/media/hero-monarch-intro-m.mp4" : "/media/hero-monarch-intro.mp4"}
               type="video/mp4"
               onError={handleIntroVideoError}
             />

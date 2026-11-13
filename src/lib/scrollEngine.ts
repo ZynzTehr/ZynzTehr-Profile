@@ -62,12 +62,21 @@ export function canPlayAmbientLoop(): boolean {
     return false;
   }
   if (typeof navigator !== "undefined") {
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-    if (conn?.saveData) {
+    const conn = (
+      navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+    ).connection;
+    // Respect Data Saver, and skip video entirely on 2G-class links
+    if (conn?.saveData || conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g") {
       return false;
     }
   }
-  return window.matchMedia("(min-width: 768px)").matches;
+  return true;
+}
+
+/** Phones get 960 px H.264 encodes (`*-m.mp4`, ~0.8-1 MB) instead of the 1080p masters. */
+export function prefersMobileVideo(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(max-width: 767px)").matches;
 }
 
 export function isFineDesktopViewport(): boolean {

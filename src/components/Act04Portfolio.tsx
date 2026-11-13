@@ -16,6 +16,7 @@ import {
 } from "../data/profileContent";
 import {
   canPlayAmbientLoop,
+  prefersMobileVideo,
   ensureGsapPlugins,
   gsap,
   prefersReducedMotion,
@@ -65,6 +66,14 @@ export function Act04Portfolio({
 
   const reduced = reducedMotion;
   const showPortfolioVideo = hasPortfolioVideo && ambientVideoEligible;
+  const [mobilePorchVideo] = useState<boolean>(() => prefersMobileVideo());
+  // Touch screens cannot hover the print, so the walk-out replays each time it scrolls back into view
+  const [replayOnView] = useState<boolean>(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: none)").matches,
+  );
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
@@ -180,15 +189,15 @@ export function Act04Portfolio({
     }
     const target = printFrameRef.current ?? sectionRef.current;
     if (!target || typeof IntersectionObserver === "undefined") return;
-    if (hasAutoPlayedRef.current) return;
+    if (hasAutoPlayedRef.current && !replayOnView) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting && !hasAutoPlayedRef.current) {
+          if (entry.isIntersecting && (replayOnView || !hasAutoPlayedRef.current)) {
             hasAutoPlayedRef.current = true;
             triggerPorchPlayback();
-            observer.disconnect();
+            if (!replayOnView) observer.disconnect();
             break;
           }
         }
@@ -200,7 +209,7 @@ export function Act04Portfolio({
     return () => {
       observer.disconnect();
     };
-  }, [showPortfolioVideo, triggerPorchPlayback]);
+  }, [replayOnView, showPortfolioVideo, triggerPorchPlayback]);
 
   // Scroll-scrubbed drafting thread, editorial text reveal, and depth recession as Page 6 slides up over Page 5
   useLayoutEffect(() => {
@@ -507,8 +516,13 @@ export function Act04Portfolio({
                       onError={handlePorchError}
                       className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     >
-                      <source src="/media/portfolio-porch-loop.webm" type="video/webm" />
-                      <source src="/media/portfolio-porch-loop.mp4" type="video/mp4" />
+                      {mobilePorchVideo ? null : (
+                        <source src="/media/portfolio-porch-loop.webm" type="video/webm" />
+                      )}
+                      <source
+                        src={mobilePorchVideo ? "/media/portfolio-porch-loop-m.mp4" : "/media/portfolio-porch-loop.mp4"}
+                        type="video/mp4"
+                      />
                     </video>
                   ) : null}
 

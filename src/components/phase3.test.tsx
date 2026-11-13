@@ -47,6 +47,8 @@ function mockViewportMatchMedia(opts: { minWidth: number; reducedMotion?: boolea
       matches = opts.minWidth >= 768;
     } else if (query === "(pointer: fine)") {
       matches = opts.minWidth >= 900;
+    } else if (query === "(max-width: 767px)") {
+      matches = opts.minWidth < 768;
     }
     return {
       matches,
@@ -228,7 +230,7 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
     expect(relatedBuilds?.textContent).toContain("Select an instrument across the four columns");
   });
 
-  it("E3: omits <video> when hasHeroVideo is false, renders muted inline loop when eligible, and suppresses on reduced-motion, < 768px, or Save-Data", () => {
+  it("E3: omits <video> when hasHeroVideo is false, renders muted inline loop when eligible, serves phone encodes below 768px, and suppresses on reduced-motion or Save-Data", () => {
     mockViewportMatchMedia({ minWidth: 1440, reducedMotion: false });
     const { container: cFalse, unmount: uFalse } = render(<HeroJourneyStage hasHeroVideo={false} />);
     expect(cFalse.querySelector("video")).toBeNull();
@@ -258,10 +260,20 @@ describe("Phase 3 Ticket 06: Act02Craft, Act03Stack, and HeroJourneyStage ambien
     expect(cReduced.querySelector("video")).toBeNull();
     uReduced();
 
-    // Suppresses below 768px
+    // Phones (< 768px) play too, from the 960 px encodes, and the transition loop buffers lazily
     mockViewportMatchMedia({ minWidth: 390, reducedMotion: false });
-    const { container: cMobile, unmount: uMobile } = render(<HeroJourneyStage hasHeroVideo={true} />);
-    expect(cMobile.querySelector("video")).toBeNull();
+    const onMobileIntroStart = vi.fn();
+    const { container: cMobile, unmount: uMobile } = render(
+      <HeroJourneyStage hasHeroVideo={true} hasHeroIntroVideo={true} onHeroIntroStart={onMobileIntroStart} />,
+    );
+    // The name and calls to action reveal alongside the clip instead of waiting for it to end
+    expect(onMobileIntroStart).toHaveBeenCalledTimes(1);
+    const mobileIntro = cMobile.querySelector('video[data-slot="hero-intro-video"]');
+    const mobileLoop = cMobile.querySelector('video[data-slot="hero-transition-video"]');
+    expect(mobileIntro?.querySelector("source")?.getAttribute("src")).toBe("/media/hero-monarch-intro-m.mp4");
+    expect(mobileIntro?.querySelectorAll("source")).toHaveLength(1);
+    expect(mobileLoop?.querySelector("source")?.getAttribute("src")).toBe("/media/hero-monarch-loop-m.mp4");
+    expect(mobileLoop?.getAttribute("preload")).toBe("metadata");
     uMobile();
 
     // Suppresses when Save-Data is active

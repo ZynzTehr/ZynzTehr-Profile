@@ -556,11 +556,24 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
     expect(await findFontFloorViolations(page, 14)).toEqual([]);
     await assertZeroAxeViolations(page, "Desktop MenuOverlay open");
 
+    // The page behind the open menu is frozen: wheel over the backdrop or the sheet moves nothing
+    const scrollBeforeWheel = await page.evaluate(() => window.scrollY);
+    const sheetLeft = await page
+      .locator('[data-slot="menu-sheet"]')
+      .evaluate((el) => el.getBoundingClientRect().left);
+    await page.mouse.move(sheetLeft / 2, 450);
+    await page.mouse.wheel(0, 800);
+    await page.mouse.move(sheetLeft + 200, 450);
+    await page.mouse.wheel(0, 800);
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeWheel);
+
     await page.keyboard.press("Escape");
     await expect(page.locator("#atelier-menu-dialog")).not.toHaveAttribute("open", "", {
       timeout: 5000,
     });
     await expect(menuTrigger).toBeFocused();
+    await expect(page.locator("html")).not.toHaveClass(/page-scroll-locked/);
 
     // Scroll to Act 05 Connect & verify ColophonSheet dialog settled at opacity 1 + DOM-wide E1 invariants
     const maxDesktopScroll = await page.evaluate(
@@ -1159,6 +1172,19 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
       await waitForDialogSettled(page, "#atelier-menu-dialog");
       await expect(page.locator('[data-slot="menu-close-button"]')).toContainText("Close");
       await assertZeroAxeViolations(page, "Tablet portrait menu open");
+
+      // A vertical swipe over the open menu must not scroll the page underneath
+      const scrollBeforeSwipe = await page.evaluate(() => window.scrollY);
+      const touch = await context.newCDPSession(page);
+      await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 60, y: 800 }] });
+      for (let step = 1; step <= 10; step += 1) {
+        await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 60, y: 800 - step * 40 }] });
+        await page.waitForTimeout(16);
+      }
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await page.waitForTimeout(500);
+      expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeSwipe);
+      await expect(menuDialog).toHaveAttribute("open", "");
       await page.touchscreen.tap(60, 540);
       await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
 

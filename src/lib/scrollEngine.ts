@@ -47,6 +47,22 @@ export function revealHeadingLines(
   });
 }
 
+/**
+ * Freeze the page behind a modal sheet: pause Lenis and stop native wheel/touch scrolling
+ * (a non-scrollable sheet would otherwise chain the gesture to the document and scrub the
+ * page, or the pinned stage, underneath). The scroll position is preserved.
+ */
+export function lockPageScroll(): void {
+  window.lenis?.stop();
+  document.documentElement.classList.add("page-scroll-locked");
+}
+
+/** Release the lock as soon as a sheet starts closing, so chapter jumps can scroll. */
+export function unlockPageScroll(): void {
+  document.documentElement.classList.remove("page-scroll-locked");
+  window.lenis?.start();
+}
+
 export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return false;

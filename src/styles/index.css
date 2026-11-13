@@ -49,6 +49,13 @@
     cursor: not-allowed;
   }
 
+  /* Modal sheets freeze the page behind them (see lockPageScroll in lib/scrollEngine.ts) */
+  html.page-scroll-locked,
+  html.page-scroll-locked body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   /* Instant tap response on touch: no 300 ms double-tap-zoom wait on controls */
   a[href],
   button,

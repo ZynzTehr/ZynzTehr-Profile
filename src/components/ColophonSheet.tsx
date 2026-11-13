@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { COLOPHON_CONTENT } from "../data/profileContent";
-import { prefersReducedMotion } from "../lib/scrollEngine";
+import {
+  lockPageScroll,
+  prefersReducedMotion,
+  unlockPageScroll,
+} from "../lib/scrollEngine";
 
 export interface ColophonSheetProps {
   open: boolean;
@@ -57,7 +61,7 @@ export function ColophonSheet({
     }
 
     if (!document.querySelector("dialog[open]")) {
-      window.lenis?.start();
+      unlockPageScroll();
       returnFocusRef?.current?.focus({ preventScroll: true });
     }
   }, [clearCloseTimer, returnFocusRef]);
@@ -73,7 +77,7 @@ export function ColophonSheet({
     if (open) {
       clearCloseTimer();
       wasOpenRef.current = true;
-      window.lenis?.stop();
+      lockPageScroll();
 
       if (!dialog.open) {
         if (typeof dialog.showModal === "function") {
@@ -92,7 +96,7 @@ export function ColophonSheet({
       setPanelPresent(false);
       if (wasOpenRef.current) {
         if (!hasOtherOpenDialog(dialog)) {
-          window.lenis?.start();
+          unlockPageScroll();
         }
         if (prefersReducedMotion()) {
           finalizeDialogClose();
@@ -116,7 +120,7 @@ export function ColophonSheet({
       if (wasOpenRef.current) {
         wasOpenRef.current = false;
         if (!document.querySelector("dialog[open]")) {
-          window.lenis?.start();
+          unlockPageScroll();
         }
       }
     };
@@ -205,7 +209,7 @@ export function ColophonSheet({
                   ? { duration: 0 }
                   : { duration: 0.64, ease: SILK_EASE }
               }
-              className="surface-cotton-rag max-h-[88dvh] w-full max-w-[680px] overflow-y-auto border border-[#211813]/18 p-6 sm:p-10"
+              className="surface-cotton-rag max-h-[88dvh] w-full max-w-[680px] overflow-y-auto overscroll-contain border border-[#211813]/18 p-6 sm:p-10"
             >
               <div className="flex items-start justify-between gap-4 border-b border-[#211813]/14 pb-5">
                 <div>

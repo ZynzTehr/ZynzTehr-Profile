@@ -8,8 +8,10 @@ import {
 } from "../data/profileContent";
 import {
   focusAnchorTarget,
+  lockPageScroll,
   navigateToAnchor,
   prefersReducedMotion,
+  unlockPageScroll,
 } from "../lib/scrollEngine";
 
 export interface MenuOverlayProps {
@@ -97,7 +99,7 @@ export function MenuOverlay({
     pendingAnchorRef.current = null;
 
     if (!document.querySelector("dialog[open]")) {
-      window.lenis?.start();
+      unlockPageScroll();
       if (pendingAnchor) {
         focusAnchorTarget(pendingAnchor);
       } else {
@@ -115,7 +117,7 @@ export function MenuOverlay({
     (href: string) => {
       pendingAnchorRef.current = href;
       if (!hasOtherOpenDialog(dialogRef.current)) {
-        window.lenis?.start();
+        unlockPageScroll();
       }
       dismiss();
       requestAnimationFrame(() => {
@@ -134,7 +136,7 @@ export function MenuOverlay({
       pendingAnchorRef.current = null;
       wasOpenRef.current = true;
       setCloseHovered(false);
-      window.lenis?.stop();
+      lockPageScroll();
 
       // Open top-layer <dialog> BEFORE mounting motion children so frame 0 starts cleanly offscreen
       if (!dialog.open) {
@@ -156,7 +158,7 @@ export function MenuOverlay({
       if (wasOpenRef.current) {
         // Unlock smooth scroll immediately on dismiss so wheel and chapter jumps respond during fade-out
         if (!hasOtherOpenDialog(dialog)) {
-          window.lenis?.start();
+          unlockPageScroll();
         }
         if (prefersReducedMotion()) {
           finalizeDialogClose();
@@ -181,7 +183,7 @@ export function MenuOverlay({
       if (wasOpenRef.current) {
         wasOpenRef.current = false;
         if (!document.querySelector("dialog[open]")) {
-          window.lenis?.start();
+          unlockPageScroll();
         }
       }
     };
@@ -293,7 +295,7 @@ export function MenuOverlay({
                       opacity: { duration: 0.46, ease: SILK_EASE },
                     }
               }
-              className="material-espresso relative flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
+              className="material-espresso relative flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto overscroll-contain border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
             >
               {touchScreen ? (
                 <span

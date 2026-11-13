@@ -888,6 +888,18 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
       await maybeCapture(page, "mobile-00-hero.png");
       await maybeCapture(page, "mobile-390-top.png");
 
+      // The cotton-rag mat shows on all four sides of the hero plate (no image over the bottom mat)
+      const matInsets = await page.evaluate(() => {
+        const frame = document.querySelector('[data-act="00-hero"] [data-slot="monarch-plate-frame"]');
+        const img = frame?.querySelector("img");
+        if (!frame || !img) return null;
+        const f = frame.getBoundingClientRect();
+        const i = img.getBoundingClientRect();
+        return [i.top - f.top, f.right - i.right, f.bottom - i.bottom, i.left - f.left];
+      });
+      expect(matInsets).not.toBeNull();
+      for (const inset of matInsets!) expect(inset).toBeGreaterThanOrEqual(6);
+
       // Both Hero CTA links must sit completely inside the 390x844 viewport at scrollY = 0
       const mobileHeroCtas = await page.evaluate(() => {
         const ctas = Array.from(
@@ -1005,6 +1017,29 @@ test.describe("The Atelier Folio (Monarch Edition) Phase 4 verification gauntlet
         timeout: 5000,
       });
       await expect(mobileMenuTrigger).toBeFocused();
+
+      // Touch: the close control is labelled, a swipe right closes the sheet, and so does
+      // a tap on the dimmed sliver of page left beside it
+      const menuDialog = page.locator("#atelier-menu-dialog");
+      await mobileMenuTrigger.tap();
+      await waitForDialogSettled(page, "#atelier-menu-dialog");
+      await expect(page.locator('[data-slot="menu-close-button"]')).toContainText("Close");
+      const touch = await context.newCDPSession(page);
+      await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 120, y: 320 }] });
+      for (let step = 1; step <= 12; step += 1) {
+        await touch.send("Input.dispatchTouchEvent", {
+          type: "touchMove",
+          touchPoints: [{ x: 120 + step * 18, y: 320 }],
+        });
+        await page.waitForTimeout(16);
+      }
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
+
+      await mobileMenuTrigger.tap();
+      await waitForDialogSettled(page, "#atelier-menu-dialog");
+      await page.touchscreen.tap(20, 420);
+      await expect(menuDialog).not.toHaveAttribute("open", "", { timeout: 5000 });
 
       await assertDomWideE1Invariants(page, "Mobile 390x844 stacked DOM");
       diagnostics.assertClean();

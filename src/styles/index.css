@@ -29,4 +29,31 @@
     overflow-x: clip;
     font-family: var(--font-serif);
   }
+
+  /* Every interactive control reads as clickable (Tailwind v4 preflight leaves buttons on the default cursor) */
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="link"],
+  summary,
+  label[for],
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* Instant tap response on touch: no 300 ms double-tap-zoom wait on controls */
+  a[href],
+  button,
+  [role="button"],
+  [role="tab"] {
+    touch-action: manipulation;
+  }
 }

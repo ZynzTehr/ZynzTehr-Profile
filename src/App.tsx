@@ -107,12 +107,16 @@ export function App() {
           return;
         }
 
-        for (const entry of entries) {
-          const act = entry.target.getAttribute("data-act");
-          if (entry.isIntersecting && act) {
-            setActiveAct(act);
-          }
+        // Derive the act from positions rather than which entry fired: the stacked hero is
+        // sticky (Journey slides over it), so it never leaves the band on the way back up.
+        if (entries.length === 0) return;
+        const probe = window.innerHeight * 0.55;
+        let current: HTMLElement = sections[0]!;
+        for (const section of sections) {
+          if (section.getBoundingClientRect().top <= probe) current = section;
         }
+        const act = current.getAttribute("data-act");
+        if (act) setActiveAct(act);
       },
       { rootMargin: "-35% 0px -45% 0px", threshold: 0.01 },
     );

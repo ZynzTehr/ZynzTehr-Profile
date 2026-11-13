@@ -14,6 +14,7 @@ import {
   prefersReducedMotion,
   ScrollTrigger,
   SplitText,
+  revealHeadingLines,
 } from "../lib/scrollEngine";
 import { Act02Craft } from "./Act02Craft";
 import { Act03Stack } from "./Act03Stack";
@@ -498,6 +499,68 @@ export function HeroJourneyStage({
     syncDualVideosForScroll,
     syncScrollHintInteractivity,
   ]);
+
+  // Stacked (phone) choreography: the espresso Journey sheet slides over a sticky hero that
+  // recedes beneath it, the running stitch draws in, and Journey's copy rises line by line.
+  // Native scroll throughout (no pinning on touch); reduced motion keeps the static stack.
+  useLayoutEffect(() => {
+    if (desktopPinned || reducedMotion) return;
+    const root = stackedRootRef.current;
+    const hero = root?.querySelector<HTMLElement>('[data-act="00-hero"]');
+    const journey = root?.querySelector<HTMLElement>('[data-act="01-journey"]');
+    if (!root || !hero || !journey) return;
+
+    ensureGsapPlugins();
+    // A hero taller than the screen sticks by its bottom edge so nothing is skipped
+    const syncStickyTop = () => {
+      hero.style.top = `${Math.min(0, window.innerHeight - hero.offsetHeight)}px`;
+    };
+    hero.style.position = "sticky";
+    syncStickyTop();
+    window.addEventListener("resize", syncStickyTop);
+
+    const ctx = gsap.context(() => {
+      const recede = hero.querySelector<HTMLElement>("[data-mobile-recede]");
+      const dim = hero.querySelector<HTMLElement>("[data-mobile-dim]");
+      gsap
+        .timeline({
+          scrollTrigger: { trigger: journey, start: "top bottom", end: "top top", scrub: 0.35 },
+          defaults: { ease: "none" },
+        })
+        .to(recede, { scale: 0.92, yPercent: -3, transformOrigin: "50% 35%" }, 0)
+        .to(recede, { opacity: 0, ease: "power2.in" }, 0)
+        .to(dim, { opacity: 0.6 }, 0);
+
+      const stitch = journey.querySelector<SVGPathElement>("[data-mobile-stitch]");
+      if (stitch) {
+        gsap.from(stitch, {
+          drawSVG: "0%",
+          ease: "none",
+          scrollTrigger: { trigger: journey, start: "top bottom", end: "top 45%", scrub: 0.35 },
+        });
+      }
+
+      const heading = journey.querySelector<HTMLElement>("#journey-heading-stacked");
+      if (heading) revealHeadingLines(heading, heading, "top 84%");
+      const rise = journey.querySelectorAll<HTMLElement>("[data-mobile-rise]");
+      rise.forEach((el) => {
+        gsap.from(el, {
+          y: 26,
+          opacity: 0,
+          duration: 0.85,
+          ease: "atelier-silk",
+          scrollTrigger: { trigger: el, start: "top 90%", once: true },
+        });
+      });
+    }, root);
+
+    return () => {
+      ctx.revert();
+      window.removeEventListener("resize", syncStickyTop);
+      hero.style.position = "";
+      hero.style.top = "";
+    };
+  }, [desktopPinned, reducedMotion]);
 
   // Page 1 (00-hero) directional fade & slide intro: waits for butterfly intro video to finish, then animates top text down, bottom copy/CTAs up, and Full-Stack rule left-to-right last
   useLayoutEffect(() => {
@@ -1216,9 +1279,15 @@ export function HeroJourneyStage({
           data-act="00-hero"
           aria-label="Opening Folio"
           onFocusCapture={startHeroTextReveal}
-          className="material-travertine relative flex min-h-svh flex-col justify-between px-5 pt-[74px] pb-6 sm:px-8 sm:pt-[82px] sm:pb-12"
+          className="material-travertine relative z-0 flex min-h-svh flex-col justify-between px-5 pt-[74px] pb-6 sm:px-8 sm:pt-[82px] sm:pb-12"
         >
-          <div className="mx-auto w-full max-w-[760px]">
+          {/* Deepens as the espresso Journey sheet slides over the hero */}
+          <div
+            aria-hidden="true"
+            data-mobile-dim
+            className="pointer-events-none absolute inset-0 z-10 bg-[#140e0b] opacity-0"
+          />
+          <div data-mobile-recede className="mx-auto w-full max-w-[760px]">
             <h1 className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[var(--ink-espresso)]">
               <span
                 data-slot="hero-first-name"
@@ -1242,9 +1311,11 @@ export function HeroJourneyStage({
             <div
               data-slot="monarch-plate-frame"
               onPointerEnter={handleJourneyButterflyHover}
-              className="surface-cotton-rag relative my-2.5 aspect-[16/10] w-full overflow-hidden p-2 sm:my-5 sm:aspect-[16/11]"
+              className="surface-cotton-rag relative my-2.5 aspect-[16/10] w-full overflow-hidden sm:my-5 sm:aspect-[16/11]"
             >
-              <div className="relative h-full w-full overflow-hidden">
+              {/* Absolute inset, not padding + h-full: WebKit resolves h-full against the
+                  aspect-ratio box's full height and pushes the image over the bottom mat */}
+              <div className="absolute inset-2 overflow-hidden">
                 <picture>
                   <source srcSet="/media/hero-monarch.avif" type="image/avif" />
                   <source srcSet="/media/hero-monarch.webp" type="image/webp" />
@@ -1371,7 +1442,7 @@ export function HeroJourneyStage({
           id="journey"
           data-act="01-journey"
           aria-labelledby="journey-heading-stacked"
-          className="material-espresso relative px-5 pt-12 pb-20 sm:px-8"
+          className="material-espresso relative z-10 px-5 pt-12 pb-20 shadow-[0_-24px_48px_-18px_rgba(8,5,4,0.55)] sm:px-8"
         >
           <svg
             aria-hidden="true"
@@ -1381,6 +1452,7 @@ export function HeroJourneyStage({
           >
             <path d="M0,28 Q720,2 1440,28 L1440,42 L0,42 Z" fill="#251b16" />
             <path
+              data-mobile-stitch
               d="M0,33 Q720,7 1440,33"
               fill="none"
               stroke="rgba(235, 221, 200, 0.42)"
@@ -1390,7 +1462,10 @@ export function HeroJourneyStage({
           </svg>
 
           <div className="mx-auto max-w-[760px] space-y-6">
-            <p className="font-utility text-[14px] uppercase tracking-[0.14em] text-[var(--accent-monarch-light)]">
+            <p
+              data-mobile-rise
+              className="font-utility text-[14px] uppercase tracking-[0.14em] text-[var(--accent-monarch-light)]"
+            >
               {JOURNEY_CONTENT.eyebrow}
             </p>
 
@@ -1405,13 +1480,13 @@ export function HeroJourneyStage({
             </h2>
 
             <div className="space-y-5 font-editorial-serif text-[18px] leading-[1.64] text-[var(--ink-cream-soft)]">
-              <p>{JOURNEY_CONTENT.paragraphs[0]}</p>
-              <p>{JOURNEY_CONTENT.paragraphs[1]}</p>
+              <p data-mobile-rise>{JOURNEY_CONTENT.paragraphs[0]}</p>
+              <p data-mobile-rise>{JOURNEY_CONTENT.paragraphs[1]}</p>
             </div>
 
             <dl className="grid grid-cols-1 gap-4 border-t border-[#f4eee3]/14 pt-6 sm:grid-cols-2">
               {JOURNEY_CONTENT.milestones.map((item) => (
-                <div key={item.period}>
+                <div key={item.period} data-mobile-rise>
                   <dt className="font-utility text-[14px] font-semibold tracking-[0.08em] text-[var(--accent-monarch-light)]">
                     {item.period}
                   </dt>
@@ -1424,6 +1499,7 @@ export function HeroJourneyStage({
 
             <p
               aria-hidden="true"
+              data-mobile-rise
               className="pt-2 font-studio-hand text-[23px] text-[var(--ink-cream-soft)]"
             >
               {JOURNEY_CONTENT.handNote}

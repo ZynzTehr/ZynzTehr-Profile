@@ -16,6 +16,37 @@ export function ensureGsapPlugins(): void {
   pluginsRegistered = true;
 }
 
+/**
+ * Masked line-by-line headline rise used by the stacked (mobile) acts, matching the
+ * desktop stage's SplitText reveals. Call inside a gsap.context so revert() restores
+ * the original markup.
+ */
+export function revealHeadingLines(
+  heading: HTMLElement,
+  trigger: Element = heading,
+  start = "top 84%",
+): void {
+  ensureGsapPlugins();
+  SplitText.create(heading, {
+    type: "lines",
+    mask: "lines",
+    linesClass: "split-line",
+    aria: "none",
+    // Re-split when the display face finishes loading or the width changes, so line
+    // breaks always match the rendered text; the returned tween is rebuilt with it.
+    autoSplit: true,
+    onSplit(self) {
+      return gsap.from(self.lines, {
+        yPercent: 112,
+        duration: 1.05,
+        stagger: 0.1,
+        ease: "atelier-mat",
+        scrollTrigger: { trigger, start, once: true },
+      });
+    },
+  });
+}
+
 export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return false;

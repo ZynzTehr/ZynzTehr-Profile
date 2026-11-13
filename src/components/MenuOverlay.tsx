@@ -22,6 +22,30 @@ export interface MenuOverlayProps {
 const EXIT_FALLBACK_MS = 640;
 const SILK_EASE: [number, number, number, number] = [0.33, 0, 0.2, 1];
 
+const TOUCH_QUERY = "(hover: none), (pointer: coarse)";
+
+/** Touch screens get an always-labelled close control and a swipe-to-close sheet. */
+function useTouchScreen(): boolean {
+  const [touch, setTouch] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(TOUCH_QUERY).matches
+      : false,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia(TOUCH_QUERY);
+    const sync = () => setTouch(mq.matches);
+    sync();
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
+  }, []);
+  return touch;
+}
+
+/** Swipe distance or flick speed that dismisses the sheet. */
+const SWIPE_CLOSE_OFFSET = 80;
+const SWIPE_CLOSE_VELOCITY = 420;
+
 function hasOtherOpenDialog(self: HTMLDialogElement | null): boolean {
   if (typeof document === "undefined") return false;
   return Array.from(document.querySelectorAll("dialog[open]")).some((d) => d !== self);
@@ -178,6 +202,8 @@ export function MenuOverlay({
   }, [dismiss, open]);
 
   const reduced = prefersReducedMotion();
+  const touchScreen = useTouchScreen();
+  const showCloseLabel = closeHovered || touchScreen;
 
   return (
     <dialog
@@ -233,6 +259,18 @@ export function MenuOverlay({
           >
             <motion.div
               data-slot="menu-sheet"
+              data-swipe={touchScreen && !reduced ? "close" : undefined}
+              // Touch: drag the sheet back toward the right edge to close it
+              drag={touchScreen && !reduced ? "x" : false}
+              dragDirectionLock
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0, right: 0.7 }}
+              dragMomentum={false}
+              onDragEnd={(_, info) => {
+                if (info.offset.x > SWIPE_CLOSE_OFFSET || info.velocity.x > SWIPE_CLOSE_VELOCITY) {
+                  dismiss();
+                }
+              }}
               initial={reduced ? false : { x: "100%", opacity: 0 }}
               animate={{ x: "0%", opacity: 1 }}
               exit={
@@ -255,8 +293,15 @@ export function MenuOverlay({
                       opacity: { duration: 0.46, ease: SILK_EASE },
                     }
               }
-              className="material-espresso flex h-full w-full max-w-[560px] flex-col justify-between overflow-y-auto border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:px-10 sm:py-8"
+              className="material-espresso relative flex h-full w-[calc(100%-3rem)] max-w-[560px] flex-col justify-between overflow-y-auto border-l border-[#f4eee3]/16 px-6 py-6 shadow-[-28px_0_64px_rgba(8,5,4,0.52)] will-change-transform sm:w-full sm:px-10 sm:py-8"
             >
+              {touchScreen ? (
+                <span
+                  aria-hidden="true"
+                  data-slot="menu-swipe-grip"
+                  className="pointer-events-none absolute top-1/2 left-1.5 h-14 w-[3px] -translate-y-1/2 rounded-full bg-[#f4eee3]/28"
+                />
+              ) : null}
               <motion.div
                 initial={reduced ? false : { opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -293,10 +338,25 @@ export function MenuOverlay({
                       ? { duration: 0 }
                       : { type: "spring", stiffness: 280, damping: 28, mass: 0.85 }
                   }
-                  className="editorial-btn-sheen relative inline-flex min-h-11 min-w-11 items-center justify-center overflow-hidden border border-[#f4eee3]/28 px-3.5 font-utility text-[14px] font-medium tracking-[0.05em] text-[var(--ink-cream)] transition-colors duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#f4eee3]/55 hover:bg-[#f4eee3]/10"
+                  className="editorial-btn-sheen relative inline-flex min-h-12 min-w-12 items-center justify-center gap-1.5 overflow-hidden border border-[#f4eee3]/28 px-3.5 font-utility text-[14px] font-medium tracking-[0.05em] text-[var(--ink-cream)] transition-[color,background-color,border-color,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#f4eee3]/55 hover:bg-[#f4eee3]/10 active:scale-[0.96] active:bg-[#f4eee3]/14"
                 >
+                  {touchScreen ? (
+                    <svg
+                      aria-hidden="true"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                    >
+                      <path d="M6 6L18 18" />
+                      <path d="M18 6L6 18" />
+                    </svg>
+                  ) : null}
                   <AnimatePresence mode="popLayout" initial={false}>
-                    {closeHovered ? (
+                    {showCloseLabel ? (
                       <motion.span
                         key="close-label"
                         data-slot="menu-close-text"

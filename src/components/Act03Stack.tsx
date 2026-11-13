@@ -9,7 +9,7 @@ import {
   type StackTool,
   type StackToolId,
 } from "../data/profileContent";
-import { ensureGsapPlugins, gsap, prefersReducedMotion } from "../lib/scrollEngine";
+import { ensureGsapPlugins, gsap, prefersReducedMotion, revealHeadingLines } from "../lib/scrollEngine";
 import { BuildReel, preloadReelScene, useReelPointerMode } from "./BuildReel";
 
 const REEL_OPEN_DELAY_MS = 140;
@@ -273,6 +273,8 @@ export function Act03Stack({ embeddedInStage = false }: Act03StackProps = {}) {
     ensureGsapPlugins();
 
     const ctx = gsap.context(() => {
+      const heading = section.querySelector<HTMLElement>("#stack-heading");
+      if (heading) revealHeadingLines(heading, section, "top 80%");
       gsap.fromTo(
         seqNodes,
         { opacity: 0, x: -16, y: 10 },

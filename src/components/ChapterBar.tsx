@@ -163,7 +163,7 @@ export function ChapterBar({
             aria-expanded={menuOpen}
             aria-controls="atelier-menu-dialog"
             onClick={onOpenMenu}
-            className={`editorial-btn-sheen group inline-flex min-h-11 min-w-11 items-center justify-center gap-2.5 border px-3.5 font-medium tracking-[0.04em] transition-all duration-[440ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            className={`editorial-btn-sheen group inline-flex min-h-11 min-w-11 items-center justify-center gap-2.5 border px-3.5 font-medium tracking-[0.04em] transition-all duration-[440ms] ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] ${
               isDarkGround
                 ? "border-[#f4eee3]/28 bg-[#f4eee3]/8 hover:border-[#f4eee3]/50 hover:bg-[#f4eee3]/16"
                 : "border-[#211813]/22 bg-[#f7f1e6]/70 hover:border-[#211813]/45 hover:bg-[#f7f1e6]"

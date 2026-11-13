@@ -5,7 +5,7 @@ import {
   CRAFT_DISCIPLINES,
   type CraftDiscipline,
 } from "../data/profileContent";
-import { ensureGsapPlugins, gsap, prefersReducedMotion } from "../lib/scrollEngine";
+import { ensureGsapPlugins, gsap, prefersReducedMotion, revealHeadingLines } from "../lib/scrollEngine";
 
 const DISCIPLINE_ANGLES = [22, 46, 68, 92] as const;
 
@@ -121,6 +121,8 @@ export function Act02Craft({ embeddedInStage = false }: Act02CraftProps = {}) {
     ensureGsapPlugins();
 
     const ctx = gsap.context(() => {
+      const heading = section.querySelector<HTMLElement>("#craft-heading");
+      if (heading) revealHeadingLines(heading, section, "top 80%");
       gsap.fromTo(
         [leftCol, specimenWrap],
         { y: 34, opacity: 0 },

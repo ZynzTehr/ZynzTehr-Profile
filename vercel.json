@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "git diff --quiet \"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" HEAD -- . ':!profile-3d-contrib' ':!README.md' ':!.github'",
+  "ignoreCommand": "base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\"; if git cat-file -e \"$base^{commit}\" 2>/dev/null; then git diff --quiet \"$base\" HEAD -- . ':!profile-3d-contrib' ':!README.md' ':!.github'; else exit 1; fi",
   "headers": [
     {
       "source": "/media/builds/(.*)",
